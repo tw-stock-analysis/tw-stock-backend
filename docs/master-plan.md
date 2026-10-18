@@ -1,6 +1,6 @@
 # 台股分析網站：完整實作規劃 v1
 
-規劃日期：2026-10-16。此文件為目標系統設計；目前已建立開發骨架、health API 與啟動設定，業務功能尚未實作。專案根目錄只保留 frontend／backend，兩者各自讀自己的 .env；後端以 uvicorn app.main:app --reload、前端以 npm run dev 啟動。安裝方式見 [後端 README](../README.md) 與 [前端 README](../../frontend/README.md)。舊的整合腳本與容器設定已移除。
+規劃日期：2026-10-16。此文件為目標系統設計；目前已建立開發骨架、health API 與啟動設定，行情業務功能尚未實作。前後端分別保存在 tw-stock-frontend／tw-stock-backend 儲存庫，兩者各自讀自己的 .env；開發時後端以 uvicorn app.main:app --reload、前端以 npm run dev 啟動。另提供由 Nginx 統一入口的 Compose 部署流程，見 [後端 README](../README.md)。
 
 ## 1. 第一版產品
 
@@ -41,7 +41,7 @@
 
 ```mermaid
 flowchart LR
-  B[瀏覽器 React] --> P[同網域 HTTPS 入口]
+  B[瀏覽器 React] --> P[Nginx 同源入口]
   P --> S[前端靜態檔案]
   P --> A[FastAPI /api/v1]
   A --> U[(PostgreSQL app schema)]
@@ -51,7 +51,7 @@ flowchart LR
   J --> O[原始資料與同步紀錄]
 ```
 
-採單一 Git 儲存庫，frontend/backend 分開建置；正式環境同一網域提供網站與 /api/v1。本機由 Vite proxy 轉送 /api。不同資料夾不必對應不同網域。
+前後端各自使用 Git 儲存庫及建置流程。Compose 由 Nginx 提供建置後的 React 靜態檔案，並將 /api/v1 轉送到內部 FastAPI；API 與 PostgreSQL 不對主機開放連接埠。目前入口為 HTTP，公開 HTTPS 部署需配合網域及憑證。本機開發仍可由 Vite proxy 轉送 /api。
 
 PostgreSQL 主要儲存帳號、自選股與偏好。為支援歷史圖表、重複讀取及上游故障時的可用性，另設 market schema 儲存必要主檔、日資料及財報快照，初期仍共用一個 PostgreSQL。歷史目標為日資料兩年、月營收三年、財報十二季；這是產品目標，必須先通過來源覆蓋與使用條件驗證。
 
