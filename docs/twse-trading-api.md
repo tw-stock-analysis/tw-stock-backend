@@ -10,6 +10,8 @@
 
 不含公司基本資料、營收、財報、權證基本資料／年度發行統計、新聞及券商基本資料。此平台沒有三大法人每日買賣超 T86；外資及陸資持股統計不等於法人買賣超。可借券賣出股數不是實際借券賣出餘額。TPEx、TDCC、TAIFEX、Fugle 與舊匯入程式已移除。
 
+實測 `TWTB4U` 目前只有 `Date`、`Code`、`Name`、`Suspension`，因此以標的及暫停先賣後買註記呈現，不宣稱提供當沖成交量值。`TWT84U` 提供漲跌停價及開盤競價基準，使用價格摘要。`ETFRank` 同時提供股票及 ETF 兩組排行，名稱與交易戶數必須使用同一組欄位。
+
 ## 端點與回應
 
 - `GET /api/v1/twse/datasets`：功能目錄；可用 `category`、`q` 篩選。
@@ -53,13 +55,19 @@ UV_CACHE_DIR=.cache/uv uv run ruff check app tests alembic
 UV_CACHE_DIR=.cache/uv uv run mypy
 UV_CACHE_DIR=.cache/uv uv run pytest -q
 UV_CACHE_DIR=.cache/uv uv build
-# 網域放行後才可執行真實來源驗證：
+# 真實來源檢查：先取 Swagger，再每隔一秒逐一請求資料來源
 UV_CACHE_DIR=.cache/uv uv run python -m app.services.twse_check
 ```
 
 單元測試用明確標示的合成 HTTP 回應，驗證每個端點取對應來源、同一路徑連續呼叫都送出新請求、無 DB session／快取／回退、數值精度、格式錯誤、請求參數及來源失敗。真實 Nginx 測試另以 `GATEWAY_BASE_URL` 執行。
 
-清單依 2026-10-18 可讀取的官方網站索引整理；目前雲端代理仍以 CONNECT 403 阻擋 `openapi.twse.com.tw`，尚未成功取回即時 Swagger 或這 44 個真實資料回應。完成程式及合成契約測試，不等於來源已逐一驗收。放行後需執行上述檢查，與官方當前 Swagger 比對路徑並驗證真實欄位；如有變更須修正再上線。
+2026-10-18 23:09（臺北）完成加強版真實來源檢查：44／44 成功，44 個回應皆非空，路徑與所有實際欄位均符合當時取得的官方 Swagger。完整筆數、欄位與 UTC 取得時間見 [真實驗證紀錄](twse-live-verification.json)；不儲存原始行情或作為查詢快取。最大單一回應為年成交資訊 72,048 筆，仍在既有限制內。
+
+檢查器支援官方目前直接描述單列物件的 Swagger，以及明確 `items` 陣列格式；欄位新增或缺少會回報 `SOURCE_CONTRACT_CHANGED` 並以非零狀態結束。合法空陣列標為 `column_contract: empty`，不宣稱已驗證其實際欄位。Swagger 前置請求失敗時不繼續發出 44 個資料請求。檢查不重試、不追蹤轉址、不讀寫資料庫。
+
+本輪 Ruff、mypy、75 項單元／合成契約測試及 Python 套件建置通過；12 項 PostgreSQL／Nginx 整合測試因未啟動該部署而略過。這次真實來源成功代表驗證當時的連線與契約成立；來源發布頻率、資料日期與未來可用性仍由 TWSE 決定。
+
+Chromium 經 Vite 同源代理 → FastAPI → 真實 TWSE 載入全部 44 個桌面功能頁與 6 個手機代表頁，逐頁驗證原始值、欄數與分頁；手動更新取得新時間，共 51 個逐次資料請求，沒有整頁橫向溢出或 JavaScript 錯誤。此為真實來源的前後端驗證，未重跑 Nginx 部署層；[前端紀錄](https://github.com/tw-stock-analysis/tw-stock-frontend/blob/feat/twse-trading-pages/docs/twse-browser-verification.json) 僅含驗證摘要，不含行情列。
 
 資料署名為臺灣證券交易所；來源文件、使用條款及授權說明以 [官方 OpenAPI](https://openapi.twse.com.tw/) 為準。
 

@@ -206,8 +206,8 @@ DATASETS = (
         "/exchangeReport/TWT84U",
         "上市個股股價升降幅度",
         "prices",
-        "ranking",
-        "檢視官方公布的個股股價升降幅度。",
+        "prices",
+        "檢視本日漲跌停價、開盤競價基準與最近成交日。",
     ),
     resource(
         "advances-declines",
@@ -254,8 +254,8 @@ DATASETS = (
         "/exchangeReport/TWTB4U",
         "上市股票每日當日沖銷交易標的及統計",
         "day-trading",
-        "balances",
-        "檢視當日沖銷交易標的與來源公布的成交統計。",
+        "events",
+        "檢視當日沖銷標的與暫停先賣後買註記；本來源未提供成交量值統計。",
     ),
     resource(
         "day-trading-suspensions",
