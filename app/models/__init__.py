@@ -1,1 +1,1 @@
-"""Import mapped models here as business features are implemented."""
+"""No market-data ORM models: TWSE queries retrieve the source on every request."""

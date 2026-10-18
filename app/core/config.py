@@ -31,7 +31,9 @@ class Settings(BaseSettings):
                 raise ValueError("DATABASE_URL must use postgresql+asyncpg")
             return url
         if not self.postgres_password or self.postgres_password == "GENERATE_WITH_SETUP":
-            raise ValueError("Copy backend/.env.example to backend/.env and set PostgreSQL credentials")
+            raise ValueError(
+                "Copy backend/.env.example to backend/.env and set PostgreSQL credentials"
+            )
         return URL.create(
             "postgresql+asyncpg",
             username=self.postgres_user,

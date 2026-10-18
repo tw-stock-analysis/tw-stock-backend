@@ -1,6 +1,8 @@
 # API 契約 v1
 
-此文件定義目標行為。目前只建立 health API 程式，其餘業務端點未實作，環境說明見 [README](../README.md)。前綴 /api/v1；使用 JSON、UTF-8。FastAPI OpenAPI 為實作後的機器契約，產生 TypeScript 型別／client，CI 檢查前後端契約漂移。
+目前已交付的契約為 health 與 44 個逐次呼叫 TWSE 的交易端點，見 [TWSE 交易資料](twse-trading-api.md) 與 FastAPI OpenAPI。端點位於 `app/api/v1/endpoints`，`v1/router.py` 掛載，BaseModel 位於 `app/schemas`，HTTP 處理位於 `app/services`。沒有 auth、其他來源、行情匯入、行情資料表或查詢快取。
+
+下方保留的是早期完整產品構想，不是這輪已同意的設計或現有 API；其中快取、舊資料回退、資料庫行情、UUID 股票主檔、會員及財報等規劃均不適用於當前 TWSE 轉接功能。現有查詢每次向 TWSE 發送 HTTP，失敗直接回錯誤，不顯示舊資料。舊 `/instruments`、`/quotes`、`/market/status` 與匯入流程已從未合併分支移除。
 
 ## 1. 共通規則
 

@@ -1,0 +1,779 @@
+{
+  "command": "uv run python -m app.services.twse_check",
+  "swagger_url": "https://openapi.twse.com.tw/v1/swagger.json",
+  "requests": "sequential, one second between datasets, no retry",
+  "content": "verification metadata only; no market records",
+  "summary": {
+    "checked": 44,
+    "passed": 44,
+    "failed": 0,
+    "completed_at": "2026-10-18T15:09:21.312381+00:00"
+  },
+  "datasets": [
+    {
+      "id": "daily-prices",
+      "path": "/exchangeReport/STOCK_DAY_ALL",
+      "status": "ok",
+      "row_count": 1380,
+      "columns": [
+        "Date",
+        "Code",
+        "Name",
+        "TradeVolume",
+        "TradeValue",
+        "OpeningPrice",
+        "HighestPrice",
+        "LowestPrice",
+        "ClosingPrice",
+        "Change",
+        "Transaction"
+      ],
+      "retrieved_at": "2026-10-18T15:08:19.702884+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "average-prices",
+      "path": "/exchangeReport/STOCK_DAY_AVG_ALL",
+      "status": "ok",
+      "row_count": 32362,
+      "columns": [
+        "Date",
+        "Code",
+        "Name",
+        "ClosingPrice",
+        "MonthlyAveragePrice"
+      ],
+      "retrieved_at": "2026-10-18T15:08:21.491854+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "monthly-trading",
+      "path": "/exchangeReport/FMSRFK_ALL",
+      "status": "ok",
+      "row_count": 33596,
+      "columns": [
+        "Month",
+        "Code",
+        "Name",
+        "HighestPrice",
+        "LowestPrice",
+        "WeightedAvgPriceAB",
+        "Transaction",
+        "TradeValueA",
+        "TradeVolumeB",
+        "TurnoverRatio"
+      ],
+      "retrieved_at": "2026-10-18T15:08:23.239854+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "yearly-trading",
+      "path": "/exchangeReport/FMNPTK_ALL",
+      "status": "ok",
+      "row_count": 72048,
+      "columns": [
+        "Year",
+        "Code",
+        "Name",
+        "TradeVolume",
+        "TradeValue",
+        "Transaction",
+        "HighestPrice",
+        "HDate",
+        "LowestPrice",
+        "LDate",
+        "AvgClosingPrice"
+      ],
+      "retrieved_at": "2026-10-18T15:08:25.853439+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "valuations-by-code",
+      "path": "/exchangeReport/BWIBBU_ALL",
+      "status": "ok",
+      "row_count": 1082,
+      "columns": [
+        "Date",
+        "Code",
+        "Name",
+        "PEratio",
+        "DividendYield",
+        "PBratio"
+      ],
+      "retrieved_at": "2026-10-18T15:08:27.608281+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "valuations-by-date",
+      "path": "/exchangeReport/BWIBBU_d",
+      "status": "ok",
+      "row_count": 1082,
+      "columns": [
+        "Date",
+        "Code",
+        "Name",
+        "ClosePrice",
+        "DividendYield",
+        "DividendYear",
+        "PEratio",
+        "PBratio",
+        "FiscalYearQuarter"
+      ],
+      "retrieved_at": "2026-10-18T15:08:29.063218+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "market-indices",
+      "path": "/exchangeReport/MI_INDEX",
+      "status": "ok",
+      "row_count": 267,
+      "columns": [
+        "日期",
+        "指數",
+        "收盤指數",
+        "漲跌",
+        "漲跌點數",
+        "漲跌百分比",
+        "特殊處理註記"
+      ],
+      "retrieved_at": "2026-10-18T15:08:30.660613+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "cross-market",
+      "path": "/exchangeReport/MI_INDEX4",
+      "status": "ok",
+      "row_count": 11,
+      "columns": [
+        "Date",
+        "TradeValue",
+        "FormosaIndex",
+        "Change"
+      ],
+      "retrieved_at": "2026-10-18T15:08:32.185202+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "formosa-index",
+      "path": "/indicesReport/FRMSA",
+      "status": "ok",
+      "row_count": 11,
+      "columns": [
+        "Date",
+        "FormosaIndex",
+        "FormosaTotalReturnIndex"
+      ],
+      "retrieved_at": "2026-10-18T15:08:33.280142+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "taiwan50-index",
+      "path": "/indicesReport/TAI50I",
+      "status": "ok",
+      "row_count": 11,
+      "columns": [
+        "Date",
+        "Taiwan50Index",
+        "Taiwan50TotalReturnIndex"
+      ],
+      "retrieved_at": "2026-10-18T15:08:34.712445+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "taiex-history",
+      "path": "/indicesReport/MI_5MINS_HIST",
+      "status": "ok",
+      "row_count": 11,
+      "columns": [
+        "Date",
+        "OpeningIndex",
+        "HighestIndex",
+        "LowestIndex",
+        "ClosingIndex"
+      ],
+      "retrieved_at": "2026-10-18T15:08:36.146250+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "taiex-return",
+      "path": "/indicesReport/MFI94U",
+      "status": "ok",
+      "row_count": 11,
+      "columns": [
+        "Date",
+        "TAIEXTotalReturnIndex"
+      ],
+      "retrieved_at": "2026-10-18T15:08:37.258250+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "foreign-industries",
+      "path": "/fund/MI_QFIIS_cat",
+      "status": "ok",
+      "row_count": 36,
+      "columns": [
+        "IndustryCat",
+        "Numbers",
+        "ShareNumber",
+        "ForeignMainlandAreaShare",
+        "Percentage"
+      ],
+      "retrieved_at": "2026-10-18T15:08:38.784458+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "foreign-top20",
+      "path": "/fund/MI_QFIIS_sort_20",
+      "status": "ok",
+      "row_count": 20,
+      "columns": [
+        "Rank",
+        "Code",
+        "Name",
+        "ShareNumber",
+        "AvailableShare",
+        "SharesHeld",
+        "AvailableInvestPer",
+        "SharesHeldPer",
+        "Upperlimit"
+      ],
+      "retrieved_at": "2026-10-18T15:08:40.219883+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "five-second-statistics",
+      "path": "/exchangeReport/MI_5MINS",
+      "status": "ok",
+      "row_count": 3241,
+      "columns": [
+        "Time",
+        "AccBidOrders",
+        "AccBidVolume",
+        "AccAskOrders",
+        "AccAskVolume",
+        "AccTransaction",
+        "AccTradeVolume",
+        "AccTradeValue"
+      ],
+      "retrieved_at": "2026-10-18T15:08:41.732633+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "market-trading",
+      "path": "/exchangeReport/FMTQIK",
+      "status": "ok",
+      "row_count": 11,
+      "columns": [
+        "Date",
+        "TradeVolume",
+        "TradeValue",
+        "Transaction",
+        "TAIEX",
+        "Change"
+      ],
+      "retrieved_at": "2026-10-18T15:08:43.003286+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "volume-top20",
+      "path": "/exchangeReport/MI_INDEX20",
+      "status": "ok",
+      "row_count": 20,
+      "columns": [
+        "Date",
+        "Rank",
+        "Code",
+        "Name",
+        "TradeVolume",
+        "Transaction",
+        "OpeningPrice",
+        "HighestPrice",
+        "LowestPrice",
+        "ClosingPrice",
+        "Dir",
+        "Change",
+        "LastBestBidPrice",
+        "LastBestAskPrice"
+      ],
+      "retrieved_at": "2026-10-18T15:08:44.086409+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "odd-lot",
+      "path": "/exchangeReport/TWT53U",
+      "status": "ok",
+      "row_count": 1366,
+      "columns": [
+        "Code",
+        "Name",
+        "TradeVolume",
+        "Transaction",
+        "TradeValue",
+        "TradePrice",
+        "BestBidPrice",
+        "BestBidVolume",
+        "BestAskPrice",
+        "BestAskVolume"
+      ],
+      "retrieved_at": "2026-10-18T15:08:45.191348+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "after-hours",
+      "path": "/exchangeReport/BFT41U",
+      "status": "ok",
+      "row_count": 20275,
+      "columns": [
+        "Code",
+        "Name",
+        "TradeVolume",
+        "Transaction",
+        "TradeValue",
+        "TradePrice",
+        "BidVolume",
+        "AskVolume"
+      ],
+      "retrieved_at": "2026-10-18T15:08:46.569902+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "foreign-listed-trading",
+      "path": "/exchangeReport/STOCK_FIRST",
+      "status": "ok",
+      "row_count": 92,
+      "columns": [
+        "Code",
+        "Name",
+        "TradeVolume",
+        "Transaction",
+        "TradeValue",
+        "OpeningPrice",
+        "HighestPrice",
+        "LowestPrice",
+        "ClosingPrice",
+        "Dir",
+        "Change",
+        "LastBestBidPrice",
+        "LastBestBidVolume",
+        "LastBestAskPrice",
+        "LastBestAskVolume",
+        "PriceEarningRatio"
+      ],
+      "retrieved_at": "2026-10-18T15:08:47.832659+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "price-ranges",
+      "path": "/exchangeReport/TWT84U",
+      "status": "ok",
+      "row_count": 38307,
+      "columns": [
+        "Code",
+        "Name",
+        "TodayLimitUp",
+        "TodayOpeningRefPrice",
+        "TodayLimitDown",
+        "PreviousDayOpeningRefPrice",
+        "PreviousDayPrice",
+        "PreviousDayLimitUp",
+        "PreviousDayLimitDown",
+        "LastTradingDay",
+        "AllowOddLotTrade"
+      ],
+      "retrieved_at": "2026-10-18T15:08:49.601204+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "advances-declines",
+      "path": "/opendata/twtazu_od",
+      "status": "ok",
+      "row_count": 2,
+      "columns": [
+        "出表日期",
+        "類型",
+        "上漲",
+        "漲停",
+        "下跌",
+        "跌停",
+        "持平",
+        "未成交",
+        "無比價"
+      ],
+      "retrieved_at": "2026-10-18T15:08:50.909720+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "electronic-trading",
+      "path": "/opendata/t187ap19",
+      "status": "ok",
+      "row_count": 1,
+      "columns": [
+        "出表日期",
+        "成交月份",
+        "本月新增戶數",
+        "本月註銷戶數",
+        "累計開戶數",
+        "本月交易戶數",
+        "本月交易人數",
+        "委託筆數",
+        "委託金額",
+        "成交筆數",
+        "成交金額",
+        "平均每筆成交金額",
+        "公司總成交筆數",
+        "公司總成交金額",
+        "占公司成交比率(筆數)",
+        "占公司成交比率(金額)",
+        "市場成交總筆數(買賣合計)",
+        "市場成交總金額(買賣合計)",
+        "占市場成交比率(筆數)",
+        "占市場成交比率(金額)"
+      ],
+      "retrieved_at": "2026-10-18T15:08:52.329623+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "margin-balances",
+      "path": "/exchangeReport/MI_MARGN",
+      "status": "ok",
+      "row_count": 1301,
+      "columns": [
+        "股票代號",
+        "股票名稱",
+        "融資買進",
+        "融資賣出",
+        "融資現金償還",
+        "融資前日餘額",
+        "融資今日餘額",
+        "融資限額",
+        "融券買進",
+        "融券賣出",
+        "融券現券償還",
+        "融券前日餘額",
+        "融券今日餘額",
+        "融券限額",
+        "資券互抵",
+        "註記"
+      ],
+      "retrieved_at": "2026-10-18T15:08:53.828330+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "margin-suspensions",
+      "path": "/exchangeReport/BFI84U",
+      "status": "ok",
+      "row_count": 19,
+      "columns": [
+        "Code",
+        "Name",
+        "StartDate",
+        "EndDate",
+        "Reason"
+      ],
+      "retrieved_at": "2026-10-18T15:08:55.256497+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "lending-limits",
+      "path": "/SBL/TWT96U",
+      "status": "ok",
+      "row_count": 1239,
+      "columns": [
+        "TWSECode",
+        "TWSEAvailableVolume",
+        "GRETAICode",
+        "GRETAIAvailableVolume"
+      ],
+      "retrieved_at": "2026-10-18T15:08:56.690505+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "day-trading",
+      "path": "/exchangeReport/TWTB4U",
+      "status": "ok",
+      "row_count": 1235,
+      "columns": [
+        "Date",
+        "Code",
+        "Name",
+        "Suspension"
+      ],
+      "retrieved_at": "2026-10-18T15:08:58.121521+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "day-trading-suspensions",
+      "path": "/exchangeReport/TWTBAU1",
+      "status": "ok",
+      "row_count": 55,
+      "columns": [
+        "Code",
+        "Name",
+        "StartDate",
+        "EndDate",
+        "Reason"
+      ],
+      "retrieved_at": "2026-10-18T15:08:59.382293+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "day-trading-suspension-history",
+      "path": "/exchangeReport/TWTBAU2",
+      "status": "ok",
+      "row_count": 41,
+      "columns": [
+        "Code",
+        "Name",
+        "StartDate",
+        "EndDate",
+        "Reason"
+      ],
+      "retrieved_at": "2026-10-18T15:09:00.642492+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "block-daily",
+      "path": "/block/BFIAUU_d",
+      "status": "ok",
+      "row_count": 44,
+      "columns": [
+        "Date",
+        "Class",
+        "Type",
+        "TradeVolume",
+        "MarketSharePer",
+        "TradeValue"
+      ],
+      "retrieved_at": "2026-10-18T15:09:02.075128+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "block-monthly",
+      "path": "/block/BFIAUU_m",
+      "status": "ok",
+      "row_count": 20,
+      "columns": [
+        "Month",
+        "Class",
+        "TradeVolume",
+        "MarketSharePer",
+        "TradeValue"
+      ],
+      "retrieved_at": "2026-10-18T15:09:03.341329+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "block-yearly",
+      "path": "/block/BFIAUU_y",
+      "status": "ok",
+      "row_count": 22,
+      "columns": [
+        "Month",
+        "TradeVolume",
+        "MarketSharePer",
+        "TradeValue"
+      ],
+      "retrieved_at": "2026-10-18T15:09:04.766634+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "no-price-limit",
+      "path": "/exchangeReport/TWT88U",
+      "status": "ok",
+      "row_count": 1,
+      "columns": [
+        "SecurCode",
+        "SecurName",
+        "1stTradingDate",
+        "5thTradingDate",
+        "PriceUnderwritten",
+        "OverAllotmentShares",
+        "Code",
+        "Name",
+        "BuySell",
+        "TradingPrice",
+        "TradingVolume",
+        "AccTradingVolume"
+      ],
+      "retrieved_at": "2026-10-18T15:09:06.196414+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "suspended-securities",
+      "path": "/exchangeReport/TWTAWU",
+      "status": "ok",
+      "row_count": 1,
+      "columns": [
+        "Number",
+        "Code",
+        "Name",
+        "TradingHaltDate",
+        "TradingHaltTime",
+        "TradingResumptionDate",
+        "TradingResumptionTime"
+      ],
+      "retrieved_at": "2026-10-18T15:09:07.624480+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "changed-trading",
+      "path": "/exchangeReport/TWT85U",
+      "status": "ok",
+      "row_count": 10,
+      "columns": [
+        "Code",
+        "Name",
+        "PeriodicCallAuctionTrading"
+      ],
+      "retrieved_at": "2026-10-18T15:09:08.890645+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "abnormal-recommendations",
+      "path": "/Announcement/BFZFZU_T",
+      "status": "ok",
+      "row_count": 1,
+      "columns": [
+        "Number",
+        "Code",
+        "Name",
+        "Date"
+      ],
+      "retrieved_at": "2026-10-18T15:09:10.158085+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "attention-threshold",
+      "path": "/announcement/notetrans",
+      "status": "ok",
+      "row_count": 2,
+      "columns": [
+        "Code",
+        "Name",
+        "RecentlyMetAttentionSecuritiesCriteria"
+      ],
+      "retrieved_at": "2026-10-18T15:09:11.572276+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "attention-securities",
+      "path": "/announcement/notice",
+      "status": "ok",
+      "row_count": 1,
+      "columns": [
+        "Number",
+        "Code",
+        "Name",
+        "NumberOfAnnouncement",
+        "TradingInfoForAttention",
+        "Date",
+        "ClosingPrice",
+        "PE"
+      ],
+      "retrieved_at": "2026-10-18T15:09:13.018344+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "disposition-securities",
+      "path": "/announcement/punish",
+      "status": "ok",
+      "row_count": 9,
+      "columns": [
+        "Number",
+        "Date",
+        "Code",
+        "Name",
+        "NumberOfAnnouncement",
+        "ReasonsOfDisposition",
+        "DispositionPeriod",
+        "DispositionMeasures",
+        "Detail",
+        "LinkInformation"
+      ],
+      "retrieved_at": "2026-10-18T15:09:14.289698+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "ex-dividend",
+      "path": "/exchangeReport/TWT48U_ALL",
+      "status": "ok",
+      "row_count": 55,
+      "columns": [
+        "Date",
+        "Code",
+        "Name",
+        "Exdividend",
+        "StockDividendRatio",
+        "SubscriptionRatio",
+        "SubscriptionPricePerShare",
+        "CashDividend",
+        "SharesOffered",
+        "SharesEmpOwner",
+        "SharesholderOwner",
+        "StockHoldingRatio"
+      ],
+      "retrieved_at": "2026-10-18T15:09:15.387119+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "market-calendar",
+      "path": "/holidaySchedule/holidaySchedule",
+      "status": "ok",
+      "row_count": 27,
+      "columns": [
+        "Name",
+        "Date",
+        "Weekday",
+        "Description"
+      ],
+      "retrieved_at": "2026-10-18T15:09:16.823981+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "warrant-trading",
+      "path": "/opendata/t187ap42_L",
+      "status": "ok",
+      "row_count": 36573,
+      "columns": [
+        "出表日期",
+        "交易日期",
+        "權證代號",
+        "權證名稱",
+        "成交金額",
+        "成交張數"
+      ],
+      "retrieved_at": "2026-10-18T15:09:18.595382+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "warrant-traders",
+      "path": "/opendata/t187ap43_L",
+      "status": "ok",
+      "row_count": 1,
+      "columns": [
+        "出表日期",
+        "日期",
+        "人數"
+      ],
+      "retrieved_at": "2026-10-18T15:09:20.039404+00:00",
+      "column_contract": "matched"
+    },
+    {
+      "id": "etf-recurring-ranking",
+      "path": "/ETFReport/ETFRank",
+      "status": "ok",
+      "row_count": 20,
+      "columns": [
+        "No",
+        "STOCKsSecurityCode",
+        "STOCKsName",
+        "STOCKsNumberofTradingAccounts",
+        "ETFsSecurityCode",
+        "ETFsName",
+        "ETFsNumberofTradingAccounts"
+      ],
+      "retrieved_at": "2026-10-18T15:09:21.312266+00:00",
+      "column_contract": "matched"
+    }
+  ]
+}

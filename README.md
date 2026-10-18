@@ -26,6 +26,21 @@ API：http://localhost:8000
 
 API 文件：http://localhost:8000/api/v1/docs
 
+## TWSE 交易資料 API
+
+每次查詢皆由 FastAPI 直接呼叫 [TWSE OpenAPI](https://openapi.twse.com.tw/)，不寫入或讀取市場資料庫、不提供行情快取或舊資料回退。提供 44 個對應端點，涵蓋價格、成交、指數、外資持股、資券、當沖、鉅額、注意／處置、日曆、權證交易與 ETF 定期定額統計。不含公司基本資料、營收、財報、其他供應商及 auth。
+
+使用 `app/api/v1/endpoints` → `app/services` 的分層，`v1/router.py` 掛載路由，輸入／輸出 BaseModel 位於 `app/schemas`。前端從 `/api/v1/twse/datasets` 取得功能目錄，再呼叫各 API 專屬端點：
+
+```bash
+curl 'http://localhost:8000/api/v1/twse/datasets'
+curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
+```
+
+每次呼叫取得「來源最新發布資料」，不代表所有資料都在盤中更新。資料欄位、日期與單位保留官方格式，數值以字串傳回。來源失敗回 503，格式錯誤回 502。未知查詢參數回 422，不會假裝支援官方未提供的歷史日期或個股查詢。
+
+完整清單、前端路徑、回應契約及驗證方式見 [TWSE 交易資料](docs/twse-trading-api.md)。2026-10-18 已逐一實測 44 個官方 API，全部成功且欄位與即時 Swagger 相符；[驗證紀錄](docs/twse-live-verification.json) 只保存筆數、欄位與取得時間，不保存行情資料。
+
 ## Nginx 整站入口（Docker Compose）
 
 兩個儲存庫放在同一層，前端需使用包含 Nginx Dockerfile 的版本：
@@ -41,7 +56,8 @@ flowchart LR
     Browser[瀏覽器] --> Nginx[Nginx :8080]
     Nginx --> Static[React 靜態檔案]
     Nginx -->|/api 與 /api/*，保留完整路徑| API[FastAPI :8000]
-    API --> DB[(PostgreSQL)]
+    API -->|每次交易查詢| TWSE[TWSE OpenAPI]
+    API -->|既有健康檢查| DB[(PostgreSQL)]
 ```
 
 在後端目錄準備 `.env`，將 `POSTGRES_PASSWORD` 設為自己的密碼，再執行：

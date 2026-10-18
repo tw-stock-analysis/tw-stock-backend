@@ -1,6 +1,8 @@
 # 台股分析網站：完整實作規劃 v1
 
-規劃日期：2026-10-16。此文件為目標系統設計；目前已建立開發骨架、health API 與啟動設定，行情業務功能尚未實作。前後端分別保存在 tw-stock-frontend／tw-stock-backend 儲存庫，兩者各自讀自己的 .env；開發時後端以 uvicorn app.main:app --reload、前端以 npm run dev 啟動。另提供由 Nginx 統一入口的 Compose 部署流程，見 [後端 README](../README.md)。
+規劃日期：2026-10-16。下方為早期完整產品構想，目前實作以 [TWSE 交易資料](twse-trading-api.md) 為準：44 個交易端點每次直接向 TWSE 請求，不匯入、不讀寫市場資料庫、不快取、不回退舊行情；其他來源、會員及財報不在本輪範圍。真實來源的雲端連通驗收仍受網域設定限制。
+
+前後端分別保存在 tw-stock-frontend／tw-stock-backend 儲存庫，各自讀自己的 .env；開發時後端以 uvicorn app.main:app --reload、前端以 npm run dev 啟動。Nginx 統一入口的 Compose 部署流程見 [後端 README](../README.md)。
 
 ## 1. 第一版產品
 
