@@ -50,13 +50,14 @@ async def publish_snapshot(session: AsyncSession, snapshot: OfficialSnapshot) ->
                 },
             )
         )
-    ids = dict(
-        (
+    ids = {
+        ticker: identifier
+        for ticker, identifier in (
             await session.execute(
                 select(Instrument.ticker, Instrument.id).where(Instrument.market == "TWSE"),
             )
         ).all()
-    )
+    }
     for item in snapshot.prices:
         values = {key: value for key, value in item.items() if key != "ticker"}
         statement = insert(DailyPrice).values(

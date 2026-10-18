@@ -64,10 +64,12 @@ def number(
         result = Decimal(value.replace(",", ""))
     except InvalidOperation as error:
         raise InvalidSourceData() from error
+    exponent = result.as_tuple().exponent
     if (
         not result.is_finite()
         or (not signed and result < 0)
-        or result.as_tuple().exponent < -scale
+        or not isinstance(exponent, int)
+        or exponent < -scale
         or abs(result) >= Decimal(10) ** integer_digits
     ):
         raise InvalidSourceData()

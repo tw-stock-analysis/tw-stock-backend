@@ -109,6 +109,6 @@ class DatasetStatus(APIModel):
 
 class MarketStatusResponse(APIModel):
     data: list[DatasetStatus]
-    supported_markets: list[Market] = Field(default_factory=lambda: ["TWSE"])
+    supported_markets: list[Market] = ["TWSE"]
     price_scope: Literal["official_daily_summary"] = "official_daily_summary"
     realtime_supported: bool = False

@@ -18,10 +18,19 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["pytest>=8.3,<10", "pytest-asyncio>=1,<2", "ruff>=0.11,<1"]
+dev = [
+    "mypy>=1.15,<2",
+    "pytest>=8.3,<10",
+    "pytest-asyncio>=1,<2",
+    "ruff>=0.11,<1",
+]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.3,<10", "pytest-asyncio>=1,<2", "ruff>=0.11,<1"]
+dev = ["pytest>=8.3,<10", "pytest-asyncio>=1,<2", "ruff>=0.11,<1", "mypy>=1.15,<2"]
+
+[tool.mypy]
+files = ["app"]
+ignore_missing_imports = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["app"]

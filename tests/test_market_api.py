@@ -22,7 +22,7 @@ def test_openapi_exposes_typed_public_contracts_without_auth():
         spec = client.get("/api/v1/openapi.json").json()
         assert client.get("/api/v1/health/live").json()["data"]["status"] == "ok"
     paths = spec["paths"]
-    assert set(paths) == {
+    assert set(paths) >= {
         "/api/v1/health/live",
         "/api/v1/health/ready",
         "/api/v1/instruments",

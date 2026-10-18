@@ -1,12 +1,14 @@
 from contextlib import asynccontextmanager
 from uuid import uuid4
 
+import httpx
 from fastapi import FastAPI, Request
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from app.api.exception_handlers import register_exception_handlers
 from app.api.v1.router import router as v1_router
 from app.core.config import Settings, get_settings
+from app.services.fugle import FugleService
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -25,7 +27,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         )
         app.state.session_factory = async_sessionmaker(engine, expire_on_commit=False)
         try:
-            yield
+            async with httpx.AsyncClient(follow_redirects=False) as source_client:
+                app.state.fugle_service = FugleService(source_client, config)
+                yield
         finally:
             await engine.dispose()
 

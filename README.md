@@ -26,6 +26,16 @@ API：http://localhost:8000
 
 API 文件：http://localhost:8000/api/v1/docs
 
+## 免費官方資料與即時行情
+
+已新增公司主檔、價量、估值、營收、產業財報、法人、資券、集保、內部人及期貨資料集查詢。官方來源先經獨立匯入再供 API 讀取，Fugle 免費 REST 行情另從後端環境變數讀取 key。完整端點、來源範圍、授權差異及匯入方式見 [免費資料 API](docs/free-data-api.md)。
+
+```bash
+uv run alembic upgrade head
+uv run python -m app.services.open_data_import --dataset twse_revenue
+curl 'http://localhost:8000/api/v1/fundamentals/monthly-revenue?dataset=twse_revenue&symbol=2330'
+```
+
 ## 公開行情 API
 
 使用 `app/api/v1/endpoints` → `services` → PostgreSQL 的分層；`app/api/v1/router.py` 統一掛載 `/api/v1`，輸入與輸出 BaseModel 放在 `app/schemas`。目前提供 TWSE 股票搜尋、批次盤後報價、個股摘要與資料狀態，不含 auth。

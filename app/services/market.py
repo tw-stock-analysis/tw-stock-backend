@@ -1,3 +1,4 @@
+from typing import Literal, cast
 from uuid import UUID
 
 from sqlalchemy import case, func, or_, select
@@ -8,6 +9,7 @@ from app.schemas.common import Pagination
 from app.schemas.market import (
     DailyQuote,
     DataMeta,
+    DatasetKey,
     DatasetStatus,
     InstrumentData,
     InstrumentListResponse,
@@ -130,7 +132,7 @@ class MarketService:
                     "change",
                 )
                 values = {field: getattr(row, field) for field in fields}
-                trade_status = (
+                trade_status: Literal["unknown", "no_trade", "traded"] = (
                     "unknown"
                     if row.volume_shares is None
                     else "no_trade"
@@ -192,13 +194,13 @@ class MarketService:
         return MarketStatusResponse(
             data=[
                 DatasetStatus(
-                    dataset=key,
+                    dataset=cast(DatasetKey, key),
                     status="available",
                     record_count=by_key[key].record_count,
                     meta=dataset_meta(by_key[key]),
                 )
                 if key in by_key
-                else DatasetStatus(dataset=key, status="not_loaded")
+                else DatasetStatus(dataset=cast(DatasetKey, key), status="not_loaded")
                 for key in DATASETS
             ]
         )

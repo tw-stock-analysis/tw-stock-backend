@@ -2,7 +2,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL, make_url
 
@@ -23,6 +23,8 @@ class Settings(BaseSettings):
     postgres_host: str = "127.0.0.1"
     postgres_port: int = Field(default=5432, ge=1, le=65535)
     database_url: str | None = None
+    fugle_api_key: SecretStr | None = None
+    fugle_display_authorized: bool = False
 
     def sqlalchemy_url(self) -> URL:
         if self.database_url:
