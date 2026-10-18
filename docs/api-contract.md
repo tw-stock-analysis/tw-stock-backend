@@ -1,6 +1,8 @@
 # API 契約 v1
 
-此文件定義目標行為。目前只建立 health API 程式，其餘業務端點未實作，環境說明見 [README](../README.md)。前綴 /api/v1；使用 JSON、UTF-8。FastAPI OpenAPI 為實作後的機器契約，產生 TypeScript 型別／client，CI 檢查前後端契約漂移。
+此文件定義目標行為；目前實作 health、TWSE 股票搜尋、個股摘要、批次盤後報價與市場資料狀態。端點放在 `app/api/v1/endpoints`，`v1/router.py` 統一掛載，輸入／輸出 BaseModel 位於 `app/schemas`，業務處理位於 `app/services`。Auth 與私人資源尚未實作。環境及已交付範圍見 [公開行情 API 說明](public-market-api.md)。前綴 /api/v1；使用 JSON、UTF-8。FastAPI OpenAPI 為目前實作的機器契約；TypeScript client 產生與 CI 契約漂移檢查仍待建置。
+
+目前切片限制：只支援 TWSE，`market=TPEX` 回 422 `MARKET_NOT_SUPPORTED`；`quotes` 的 IDs 使用重複 query parameter（`?ids=UUID&ids=UUID`）。個股摘要先提供 `instrument`、`instrument_meta` 與 `quote`，不填入尚未支援的基本面。搜尋回傳 `instrumentId`、`ticker`、`market`、`name`、`company_name`、`industry_code`、`type`；掛牌／下市生命週期狀態留待後續。資料集／報價有來源、日期、取得時間與版本；未接交易日曆前 freshness 為 unknown。下列未完成項目為目標規格，不能視為已提供。
 
 ## 1. 共通規則
 

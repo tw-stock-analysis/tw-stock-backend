@@ -26,6 +26,18 @@ API：http://localhost:8000
 
 API 文件：http://localhost:8000/api/v1/docs
 
+## 公開行情 API
+
+使用 `app/api/v1/endpoints` → `services` → PostgreSQL 的分層；`app/api/v1/router.py` 統一掛載 `/api/v1`，輸入與輸出 BaseModel 放在 `app/schemas`。目前提供 TWSE 股票搜尋、批次盤後報價、個股摘要與資料狀態，不含 auth。
+
+```bash
+uv run alembic upgrade head
+uv run python -m app.services.market_import
+curl 'http://localhost:8000/api/v1/instruments?q=2330'
+```
+
+官方來源需可連線至 `openapi.twse.com.tw:443`；本次雲端實測被對外代理以 403 阻擋，因此尚未完成真實來源匯入驗證。正式 API 不會自動載入測試假資料。完整分層、端點、資料範圍及測試指令見 [公開行情 API 說明](docs/public-market-api.md)。
+
 ## Nginx 整站入口（Docker Compose）
 
 兩個儲存庫放在同一層，前端需使用包含 Nginx Dockerfile 的版本：

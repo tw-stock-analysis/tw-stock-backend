@@ -1,6 +1,6 @@
 # 台股分析網站：完整實作規劃 v1
 
-規劃日期：2026-10-16。此文件為目標系統設計；目前已建立開發骨架、health API 與啟動設定，行情業務功能尚未實作。前後端分別保存在 tw-stock-frontend／tw-stock-backend 儲存庫，兩者各自讀自己的 .env；開發時後端以 uvicorn app.main:app --reload、前端以 npm run dev 啟動。另提供由 Nginx 統一入口的 Compose 部署流程，見 [後端 README](../README.md)。
+規劃日期：2026-10-16。此文件為目標系統設計；目前已建立開發骨架、health API 與啟動設定，已加入第一批 TWSE 公開查詢端點，真實來源的雲端連通驗證仍受網路設定限制。前後端分別保存在 tw-stock-frontend／tw-stock-backend 儲存庫，兩者各自讀自己的 .env；開發時後端以 uvicorn app.main:app --reload、前端以 npm run dev 啟動。另提供由 Nginx 統一入口的 Compose 部署流程，見 [後端 README](../README.md)。
 
 ## 1. 第一版產品
 

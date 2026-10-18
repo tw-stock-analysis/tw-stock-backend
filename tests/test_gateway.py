@@ -53,7 +53,7 @@ def test_unknown_api_routes_remain_json_404(path):
     status, headers, body = get(path)
     assert status == 404
     assert headers.get_content_type() == "application/json"
-    assert json.loads(body)["detail"] == "Not Found"
+    assert json.loads(body)["error"]["code"] == "RESOURCE_NOT_FOUND"
 
 
 def test_hashed_assets_cache_and_missing_assets_do_not_serve_spa():

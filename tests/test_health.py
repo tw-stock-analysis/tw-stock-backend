@@ -4,6 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.core.config import Settings
 from app.db.session import get_session
 from app.main import create_app
+from app.services.health import migration_head
 
 
 def make_test_app():
@@ -40,7 +41,7 @@ def test_readiness_does_not_leak_database_errors():
 def test_readiness_requires_migrations():
     class ReadySession:
         async def scalar(self, statement):
-            return "0001_create_schemas"
+            return migration_head()
 
     async def ready_session():
         yield ReadySession()
@@ -49,3 +50,17 @@ def test_readiness_requires_migrations():
     app.dependency_overrides[get_session] = ready_session
     with TestClient(app) as client:
         assert client.get("/api/v1/health/ready").status_code == 200
+
+
+def test_readiness_rejects_an_older_schema():
+    class OldSession:
+        async def scalar(self, statement):
+            return "0001_create_schemas"
+
+    async def old_session():
+        yield OldSession()
+
+    app = make_test_app()
+    app.dependency_overrides[get_session] = old_session
+    with TestClient(app) as client:
+        assert client.get("/api/v1/health/ready").status_code == 503
