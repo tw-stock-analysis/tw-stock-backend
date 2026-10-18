@@ -4,12 +4,3 @@ class ServiceError(Exception):
         self.code = code
         self.message = message
         self.status_code = status_code
-
-
-class MarketDataUnavailable(ServiceError):
-    def __init__(self):
-        super().__init__(
-            "MARKET_DATA_UNAVAILABLE",
-            "Market data is not available. Run the official data import.",
-            503,
-        )

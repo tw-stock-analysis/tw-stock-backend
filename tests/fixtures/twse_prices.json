@@ -1,5 +1,0 @@
-[
-  {"Date":"1130102","Code":"2330","Name":"台積電","TradeVolume":"12,345,678","TradeValue":"7,500,000,000","OpeningPrice":"590.00","HighestPrice":"595.00","LowestPrice":"588.00","ClosingPrice":"593.00","Change":"+3.00","Transaction":"1,234"},
-  {"Date":"1130102","Code":"2317","Name":"鴻海","TradeVolume":"0","TradeValue":"0","OpeningPrice":"--","HighestPrice":"--","LowestPrice":"--","ClosingPrice":"--","Change":"--","Transaction":"0"},
-  {"Date":"1130102","Code":"0050","Name":"測試基金","TradeVolume":"1,000","TradeValue":"100,000","OpeningPrice":"100.00","HighestPrice":"100.00","LowestPrice":"100.00","ClosingPrice":"100.00","Change":"0.00","Transaction":"10"}
-]

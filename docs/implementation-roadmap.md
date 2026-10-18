@@ -68,4 +68,4 @@ P2 可先用有標記的固定 fixture 建 UI，但階段完成必須驗證真�
 
 監測 request_id、API 延遲、DB pool 等待、同步失敗、最新交易日及備份結果。日誌不包含密碼、Cookie、CSRF／reset token 或完整私人請求。開發用信件捕捉器可供驗證流程，公開註冊前必須接上實際寄信服務。
 
-目前已開始 P1：前後端獨立骨架、health API 與 migration 已寫入。開發時可各自啟動；另提供 Compose 整站流程，由 Nginx 提供前端靜態檔案並轉送 `/api` 至內部 FastAPI，migration 成功後才啟動服務，見 [後端 README](../README.md)。第一批 TWSE 公開查詢端點與官方資料匯入程序已加入；P0 真實來源連通驗證仍受網路設定限制，完整行情業務功能待後續實作。
+目前交付前後端骨架、health、既有部署 migration，以及 44 個 TWSE 逐次查詢交易端點與對應前端。Nginx 提供靜態檔案並代理 `/api`。依本輪確認，交易查詢不讀寫資料庫、不匯入、不快取，其他來源已移除；本文件其他階段僅為早期構想。實作以 [TWSE 交易資料](twse-trading-api.md) 為準，真實來源連通驗收仍受環境網域設定限制。

@@ -26,27 +26,20 @@ API：http://localhost:8000
 
 API 文件：http://localhost:8000/api/v1/docs
 
-## 免費官方資料與即時行情
+## TWSE 交易資料 API
 
-已新增公司主檔、價量、估值、營收、產業財報、法人、資券、集保、內部人及期貨資料集查詢。官方來源先經獨立匯入再供 API 讀取，Fugle 免費 REST 行情另從後端環境變數讀取 key。完整端點、來源範圍、授權差異及匯入方式見 [免費資料 API](docs/free-data-api.md)。
+每次查詢皆由 FastAPI 直接呼叫 [TWSE OpenAPI](https://openapi.twse.com.tw/)，不寫入或讀取市場資料庫、不提供行情快取或舊資料回退。提供 44 個對應端點，涵蓋價格、成交、指數、外資持股、資券、當沖、鉅額、注意／處置、日曆、權證交易與 ETF 定期定額統計。不含公司基本資料、營收、財報、其他供應商及 auth。
 
-```bash
-uv run alembic upgrade head
-uv run python -m app.services.open_data_import --dataset twse_revenue
-curl 'http://localhost:8000/api/v1/fundamentals/monthly-revenue?dataset=twse_revenue&symbol=2330'
-```
-
-## 公開行情 API
-
-使用 `app/api/v1/endpoints` → `services` → PostgreSQL 的分層；`app/api/v1/router.py` 統一掛載 `/api/v1`，輸入與輸出 BaseModel 放在 `app/schemas`。目前提供 TWSE 股票搜尋、批次盤後報價、個股摘要與資料狀態，不含 auth。
+使用 `app/api/v1/endpoints` → `app/services` 的分層，`v1/router.py` 掛載路由，輸入／輸出 BaseModel 位於 `app/schemas`。前端從 `/api/v1/twse/datasets` 取得功能目錄，再呼叫各 API 專屬端點：
 
 ```bash
-uv run alembic upgrade head
-uv run python -m app.services.market_import
-curl 'http://localhost:8000/api/v1/instruments?q=2330'
+curl 'http://localhost:8000/api/v1/twse/datasets'
+curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
 ```
 
-官方來源需可連線至 `openapi.twse.com.tw:443`；本次雲端實測被對外代理以 403 阻擋，因此尚未完成真實來源匯入驗證。正式 API 不會自動載入測試假資料。完整分層、端點、資料範圍及測試指令見 [公開行情 API 說明](docs/public-market-api.md)。
+每次呼叫取得「來源最新發布資料」，不代表所有資料都在盤中更新。資料欄位、日期與單位保留官方格式，數值以字串傳回。來源失敗回 503，格式錯誤回 502。未知查詢參數回 422，不會假裝支援官方未提供的歷史日期或個股查詢。
+
+完整清單、前端路徑、回應契約及驗證方式見 [TWSE 交易資料](docs/twse-trading-api.md)。本環境對 `openapi.twse.com.tw:443` 的請求仍被代理以 403 阻擋；44 個來源已完成端點與離線契約測試，尚未逐一驗收真實回應。
 
 ## Nginx 整站入口（Docker Compose）
 
@@ -63,7 +56,8 @@ flowchart LR
     Browser[瀏覽器] --> Nginx[Nginx :8080]
     Nginx --> Static[React 靜態檔案]
     Nginx -->|/api 與 /api/*，保留完整路徑| API[FastAPI :8000]
-    API --> DB[(PostgreSQL)]
+    API -->|每次交易查詢| TWSE[TWSE OpenAPI]
+    API -->|既有健康檢查| DB[(PostgreSQL)]
 ```
 
 在後端目錄準備 `.env`，將 `POSTGRES_PASSWORD` 設為自己的密碼，再執行：

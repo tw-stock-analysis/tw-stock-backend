@@ -16,10 +16,18 @@ async def test_real_asyncpg_database_and_namespaces():
     try:
         async with engine.connect() as connection:
             assert await connection.scalar(text("SELECT 1")) == 1
-            schemas = (await connection.execute(text(
-                "SELECT schema_name FROM information_schema.schemata "
-                "WHERE schema_name IN ('app', 'market')"
-            ))).scalars().all()
+            schemas = (
+                (
+                    await connection.execute(
+                        text(
+                            "SELECT schema_name FROM information_schema.schemata "
+                            "WHERE schema_name IN ('app', 'market')"
+                        )
+                    )
+                )
+                .scalars()
+                .all()
+            )
             assert set(schemas) == {"app", "market"}
     finally:
         await engine.dispose()

@@ -1,4 +1,1 @@
-from app.models.market import DailyPrice, Instrument, MarketDataset
-from app.models.open_data import OpenDataRecord, OpenDataSnapshot
-
-__all__ = ["DailyPrice", "Instrument", "MarketDataset", "OpenDataRecord", "OpenDataSnapshot"]
+"""No market-data ORM models: TWSE queries retrieve the source on every request."""

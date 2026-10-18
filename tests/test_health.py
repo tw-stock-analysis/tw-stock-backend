@@ -55,7 +55,7 @@ def test_readiness_requires_migrations():
 def test_readiness_rejects_an_older_schema():
     class OldSession:
         async def scalar(self, statement):
-            return "0001_create_schemas"
+            return "obsolete_revision"
 
     async def old_session():
         yield OldSession()

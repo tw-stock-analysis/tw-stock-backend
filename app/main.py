@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.api.exception_handlers import register_exception_handlers
 from app.api.v1.router import router as v1_router
 from app.core.config import Settings, get_settings
-from app.services.fugle import FugleService
+from app.services.twse import TwseService
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
@@ -18,7 +18,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def lifespan(app: FastAPI):
         engine = create_async_engine(
             config.sqlalchemy_url(),
-            isolation_level="REPEATABLE READ",
             pool_pre_ping=True,
             pool_size=5,
             max_overflow=5,
@@ -28,7 +27,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         app.state.session_factory = async_sessionmaker(engine, expire_on_commit=False)
         try:
             async with httpx.AsyncClient(follow_redirects=False) as source_client:
-                app.state.fugle_service = FugleService(source_client, config)
+                app.state.twse_service = TwseService(source_client)
                 yield
         finally:
             await engine.dispose()
