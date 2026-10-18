@@ -68,4 +68,4 @@ P2 可先用有標記的固定 fixture 建 UI，但階段完成必須驗證真�
 
 監測 request_id、API 延遲、DB pool 等待、同步失敗、最新交易日及備份結果。日誌不包含密碼、Cookie、CSRF／reset token 或完整私人請求。開發用信件捕捉器可供驗證流程，公開註冊前必須接上實際寄信服務。
 
-目前已開始 P1：前後端獨立骨架、health API 與 migration 已寫入。舊 Compose、整合腳本及舊環境報告已移除；兩邊各自安裝與啟動，見 [後端 README](../README.md) 與 [前端 README](../../frontend/README.md)。套件下載及完整服務驗證尚未完成，P0 市場來源驗證與所有業務功能仍待實作。
+目前已開始 P1：前後端獨立骨架、health API 與 migration 已寫入。開發時可各自啟動；另提供 Compose 整站流程，由 Nginx 提供前端靜態檔案並轉送 `/api` 至內部 FastAPI，migration 成功後才啟動服務，見 [後端 README](../README.md)。P0 市場來源驗證與行情業務功能仍待實作。
