@@ -29,7 +29,17 @@ def get(path, headers=None):
         return response.status, response.headers, response.read()
 
 
-@pytest.mark.parametrize("path", ["/", "/stocks", "/stocks/demo-tsmc", "/watchlists/demo"])
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/",
+        "/stocks",
+        "/stocks/2330",
+        "/stocks/demo-tsmc",
+        "/market/daily-prices",
+        "/watchlists/demo",
+    ],
+)
 def test_spa_routes_serve_the_frontend(path):
     status, headers, body = get(path)
     assert status == 200

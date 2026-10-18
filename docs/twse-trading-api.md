@@ -4,6 +4,8 @@
 
 瀏覽器開啟資料頁 → Nginx → FastAPI endpoint → service → TWSE OpenAPI → 回傳前端。每次進頁及手動更新都發出新來源請求。沒有市場資料表、匯入程序、排程、行情快取、舊資料回退、自動重試或輪詢。列表篩選、圖表欄位選擇及分頁使用本次取得的結果，不額外呼叫來源。功能目錄只有靜態定義，不會一次請求全部 44 個資料 API。
 
+以上本地篩選／分頁適用於 `/market/{dataset.id}` 原始資料頁。新增 `/stocks` 搜尋及分頁每次重新請求來源，單股詳情依序取得三個區塊，另見 [個股研究 API](stock-research-api.md)。
+
 ## 已確認範圍
 
 官方網站「證券交易」36 項排除權證基本資料 1 項，加入「指數」5 項、處置股票 1 項、權證交易 2 項及 ETF 定期定額統計 1 項，共 44 項。只使用 `https://openapi.twse.com.tw/v1`，不轉接官方網站其他未列出的內部介面。
@@ -65,9 +67,9 @@ UV_CACHE_DIR=.cache/uv uv run python -m app.services.twse_check
 
 檢查器支援官方目前直接描述單列物件的 Swagger，以及明確 `items` 陣列格式；欄位新增或缺少會回報 `SOURCE_CONTRACT_CHANGED` 並以非零狀態結束。合法空陣列標為 `column_contract: empty`，不宣稱已驗證其實際欄位。Swagger 前置請求失敗時不繼續發出 44 個資料請求。檢查不重試、不追蹤轉址、不讀寫資料庫。
 
-本輪 Ruff、mypy、75 項單元／合成契約測試及 Python 套件建置通過；12 項 PostgreSQL／Nginx 整合測試因未啟動該部署而略過。這次真實來源成功代表驗證當時的連線與契約成立；來源發布頻率、資料日期與未來可用性仍由 TWSE 決定。
+2026-10-18 第一輪完成 Ruff、mypy、75 項單元／合成契約及 Python 套件建置，當時 12 項 PostgreSQL／Nginx 測試略過。2026-10-19 已在獨立 Docker Compose 部署補完 PostgreSQL／Nginx 與真實來源驗收，完整 154 項測試全過，詳見 [個股研究 API](stock-research-api.md)。來源發布頻率、資料日期與未來可用性仍由 TWSE 決定。
 
-Chromium 經 Vite 同源代理 → FastAPI → 真實 TWSE 載入全部 44 個桌面功能頁與 6 個手機代表頁，逐頁驗證原始值、欄數與分頁；手動更新取得新時間，共 51 個逐次資料請求，沒有整頁橫向溢出或 JavaScript 錯誤。此為真實來源的前後端驗證，未重跑 Nginx 部署層；[前端紀錄](https://github.com/tw-stock-analysis/tw-stock-frontend/blob/feat/twse-trading-pages/docs/twse-browser-verification.json) 僅含驗證摘要，不含行情列。
+2026-10-18 Chromium 曾經 Vite 同源代理載入全部 44 個桌面功能頁與 6 個手機代表頁，確認原始值、欄數、分頁與更新，當時未使用 Nginx；[前端紀錄](https://github.com/tw-stock-analysis/tw-stock-frontend/blob/develop/docs/twse-browser-verification.json) 僅含驗證摘要。後續驗收改用真實 Nginx Docker 部署，詳見個股研究文件。
 
 資料署名為臺灣證券交易所；來源文件、使用條款及授權說明以 [官方 OpenAPI](https://openapi.twse.com.tw/) 為準。
 

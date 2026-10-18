@@ -29,5 +29,14 @@ async def test_real_asyncpg_database_and_namespaces():
                 .all()
             )
             assert set(schemas) == {"app", "market"}
+            assert (
+                await connection.scalar(
+                    text(
+                        "SELECT count(*) FROM information_schema.tables "
+                        "WHERE table_schema IN ('app', 'market')"
+                    )
+                )
+                == 0
+            )
     finally:
         await engine.dispose()
