@@ -41,6 +41,12 @@ curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
 
 完整清單、前端路徑、回應契約及驗證方式見 [TWSE 交易資料](docs/twse-trading-api.md)。2026-10-18 已逐一實測 44 個官方 API，全部成功且欄位與即時 Swagger 相符；[驗證紀錄](docs/twse-live-verification.json) 只保存筆數、欄位與取得時間，不保存行情資料。
 
+## 個股搜尋與詳情
+
+新增 4 個明確宣告的端點：`GET /api/v1/stocks`（q／page／limit）、`GET /api/v1/stocks/{code}`、`GET /api/v1/stocks/{code}/valuation`、`GET /api/v1/stocks/{code}/margin`。每次各自重新取得既有 TWSE 來源全集，在記憶體中搜尋或精確比對代碼，保留精確字串，不儲存或快取行情。連同原始端點、目錄及健康檢查，目前共 **51 個 API 路由**。
+
+前端 `/stocks` 可搜尋選股，`/stocks/{code}` 依序取得成交、估值與資券，分別標示日期、取得時間及失敗狀態；來源未提供的資券日期不自行補上。完整契約與 154 項整合驗收見 [個股研究 API](docs/stock-research-api.md)。
+
 ## Nginx 整站入口（Docker Compose）
 
 兩個儲存庫放在同一層，前端需使用包含 Nginx Dockerfile 的版本：

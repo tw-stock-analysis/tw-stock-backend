@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import health, twse
+from app.api.v1.endpoints import health, stocks, twse
 from app.schemas.common import ErrorResponse
 
 router = APIRouter(
@@ -9,3 +9,4 @@ router = APIRouter(
 )
 router.include_router(health.router)
 router.include_router(twse.router)
+router.include_router(stocks.router)

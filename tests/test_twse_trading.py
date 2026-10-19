@@ -195,7 +195,7 @@ async def test_new_columns_are_exposed_and_large_responses_are_bounded(monkeypat
 
 def test_openapi_is_explicit_typed_and_has_no_auth(api):
     schema = api.openapi()
-    assert len(schema["paths"]) == 47  # 44 data APIs + catalogue + two health endpoints.
+    assert len(schema["paths"]) == 51  # 44 TWSE + catalogue + two health + four stock views.
     for dataset in DATASETS:
         operation = schema["paths"][dataset.endpoint]["get"]
         assert operation["responses"]["200"]["content"]["application/json"]["schema"][

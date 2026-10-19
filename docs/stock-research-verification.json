@@ -1,0 +1,69 @@
+{
+  "verified_at": "2026-10-18T16:46:37.408843+00:00",
+  "topology": "isolated Docker Compose: Nginx -> FastAPI -> live TWSE; PostgreSQL for migration/readiness only",
+  "tests": {
+    "total": 154,
+    "passed": 154,
+    "failed": 0,
+    "skipped": 0,
+    "unit_and_synthetic": 95,
+    "postgresql": 1,
+    "nginx": 13,
+    "live_twse_gateway": 45
+  },
+  "checks": {
+    "ruff": "passed",
+    "mypy_source_files": 29,
+    "package_build": "passed",
+    "docker_builds": "passed",
+    "alembic_check": "no new upgrade operations",
+    "business_tables_in_app_and_market": 0
+  },
+  "browser": {
+    "verified_at": "2026-10-18T16:46:17.673197+00:00",
+    "topology": "Chromium -> real Nginx Docker image -> FastAPI -> real TWSE; isolated Compose PostgreSQL for readiness only",
+    "checks": [
+      {
+        "check": "nginx_search_pagination",
+        "status": "ok"
+      },
+      {
+        "check": "search_select_stock_and_sequential_sections",
+        "status": "ok",
+        "code": "2330",
+        "sections": 3
+      },
+      {
+        "check": "manual_refresh_fresh_quote",
+        "status": "ok"
+      },
+      {
+        "check": "direct_subroute_and_browser_reload",
+        "status": "ok"
+      },
+      {
+        "check": "mobile_leading_zero_and_unpublished_valuation",
+        "status": "ok",
+        "code": "0050"
+      },
+      {
+        "check": "unknown_stock_stops_optional_calls",
+        "status": "ok"
+      },
+      {
+        "check": "real_source_connection_failure_removes_old_results",
+        "status": "ok",
+        "http_status": 503
+      },
+      {
+        "check": "source_connection_restored",
+        "status": "ok"
+      }
+    ],
+    "javascript_errors": [],
+    "max_concurrent_stock_requests": 1,
+    "stock_requests": 23,
+    "contains_market_records": false
+  },
+  "contains_market_records": false
+}
