@@ -113,12 +113,17 @@ async def test_user_normalization_defaults_and_update_timestamp(db_session):
 
 
 @pytest.mark.parametrize("soft_deleted", [False, True])
-async def test_normalized_email_unique_even_after_soft_delete(db_session, user, soft_deleted):
+async def test_email_reuse_only_after_soft_delete(db_session, user, soft_deleted):
     if soft_deleted:
         user.deleted_at = datetime.now(UTC)
         await db_session.flush()
-    db_session.add(make_user(email=f"  {user.email.upper()}  "))
-    with pytest.raises(IntegrityError, match="uq_users_email"):
+    new_user = make_user(email=f"  {user.email.upper()}  ")
+    db_session.add(new_user)
+    if soft_deleted:
+        await db_session.flush()
+        assert new_user.id != user.id
+        return
+    with pytest.raises(IntegrityError, match="uq_users_active_email"):
         await db_session.flush()
 
 

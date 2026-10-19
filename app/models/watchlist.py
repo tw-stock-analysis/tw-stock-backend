@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.db.base import Base
@@ -17,6 +17,7 @@ class Watchlist(Base):
     __table_args__ = (
         CheckConstraint("name = btrim(name) AND char_length(name) > 0", name="name_not_blank"),
         Index("ix_watchlists_user_id_created_at", "user_id", "created_at"),
+        Index("uq_watchlists_user_id_name", "user_id", text("lower(name)"), unique=True),
         {"schema": "app"},
     )
 

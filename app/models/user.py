@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, String, Text, func
+from sqlalchemy import CheckConstraint, DateTime, Index, String, Text, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.db.base import Base
@@ -16,6 +16,12 @@ if TYPE_CHECKING:
 class User(Base):
     __tablename__ = "users"
     __table_args__ = (
+        Index(
+            "uq_users_active_email",
+            text("lower(email)"),
+            unique=True,
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
         CheckConstraint(
             "email = lower(btrim(email)) AND char_length(email) > 0",
             name="email_normalized",
@@ -28,7 +34,7 @@ class User(Base):
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
-    email: Mapped[str] = mapped_column(String(254), unique=True)
+    email: Mapped[str] = mapped_column(String(254))
     password_hash: Mapped[str] = mapped_column(Text)
     display_name: Mapped[str | None] = mapped_column(String(100))
     status: Mapped[str] = mapped_column(

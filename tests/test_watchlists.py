@@ -35,12 +35,12 @@ async def watchlist(db_session):
 async def test_user_owns_multiple_lists_and_stock_can_appear_in_each(db_session):
     owner = make_user(
         watchlists=[
-            Watchlist(name="長期追蹤", items=[WatchlistItem(stock_code="0050")]),
-            Watchlist(name="ETF", items=[WatchlistItem(stock_code="0050")]),
+            Watchlist(name="長期追蹤", items=[WatchlistItem(stock_code="0050", position=0)]),
+            Watchlist(name="ETF", items=[WatchlistItem(stock_code="0050", position=0)]),
         ]
     )
     another = make_user(
-        watchlists=[Watchlist(name="ETF", items=[WatchlistItem(stock_code="0050")])]
+        watchlists=[Watchlist(name="ETF", items=[WatchlistItem(stock_code="0050", position=0)])]
     )
     db_session.add_all([owner, another])
     await db_session.flush()
@@ -77,7 +77,7 @@ async def test_name_normalization_and_update_timestamp(db_session):
 @pytest.mark.parametrize("code", ["0050", "00632R", "2330"])
 async def test_item_identifier_normalization_and_defaults(db_session, watchlist, code):
     record = WatchlistItem(
-        watchlist_id=watchlist.id, market=" twse ", stock_code=f" {code.lower()} "
+        watchlist_id=watchlist.id, market=" twse ", stock_code=f" {code.lower()} ", position=0
     )
     db_session.add(record)
     await db_session.flush()
@@ -91,11 +91,11 @@ async def test_item_identifier_normalization_and_defaults(db_session, watchlist,
 
 
 async def test_same_market_and_stock_cannot_repeat_in_a_list(db_session, watchlist):
-    db_session.add(WatchlistItem(watchlist_id=watchlist.id, stock_code="0050"))
+    db_session.add(WatchlistItem(watchlist_id=watchlist.id, stock_code="0050", position=0))
     await db_session.flush()
     with pytest.raises(IntegrityError, match="pk_watchlist_items"):
         await db_session.execute(
-            insert(WatchlistItem).values(watchlist_id=watchlist.id, stock_code="0050")
+            insert(WatchlistItem).values(watchlist_id=watchlist.id, stock_code="0050", position=1)
         )
 
 
@@ -103,7 +103,7 @@ async def test_order_is_stable_and_positions_can_be_swapped(db_session, watchlis
     db_session.add_all(
         [
             WatchlistItem(watchlist_id=watchlist.id, stock_code="2330", position=2),
-            WatchlistItem(watchlist_id=watchlist.id, stock_code="00632R", position=0),
+            WatchlistItem(watchlist_id=watchlist.id, stock_code="00632R", position=1),
             WatchlistItem(watchlist_id=watchlist.id, stock_code="0050", position=0),
         ]
     )
@@ -122,14 +122,14 @@ async def test_order_is_stable_and_positions_can_be_swapped(db_session, watchlis
     await db_session.flush()
     db_session.expunge_all()
     reordered = await db_session.scalar(query)
-    assert [item.stock_code for item in reordered.items] == ["00632R", "2330", "0050"]
+    assert [item.stock_code for item in reordered.items] == ["2330", "00632R", "0050"]
 
 
 async def test_removing_relationship_item_deletes_only_that_item(db_session, watchlist):
     db_session.add_all(
         [
-            WatchlistItem(watchlist_id=watchlist.id, stock_code="0050"),
-            WatchlistItem(watchlist_id=watchlist.id, stock_code="2330"),
+            WatchlistItem(watchlist_id=watchlist.id, stock_code="0050", position=0),
+            WatchlistItem(watchlist_id=watchlist.id, stock_code="2330", position=1),
         ]
     )
     await db_session.flush()
@@ -163,7 +163,7 @@ async def test_database_rejects_blank_or_untrimmed_names(db_session, watchlist, 
     ],
 )
 async def test_database_item_constraints(db_session, watchlist, values, constraint):
-    row = {"watchlist_id": watchlist.id, "stock_code": "0050"} | values
+    row = {"watchlist_id": watchlist.id, "stock_code": "0050", "position": 0} | values
     with pytest.raises(IntegrityError, match=constraint):
         await db_session.execute(insert(WatchlistItem.__table__).values(**row))
 
@@ -173,7 +173,7 @@ async def test_orphaned_parent_rejected(db_session, kind):
     record = (
         Watchlist(user_id=uuid4(), name="ETF")
         if kind == "watchlist"
-        else WatchlistItem(watchlist_id=uuid4(), stock_code="0050")
+        else WatchlistItem(watchlist_id=uuid4(), stock_code="0050", position=0)
     )
     db_session.add(record)
     with pytest.raises(IntegrityError, match="foreign key constraint"):
@@ -183,9 +183,11 @@ async def test_orphaned_parent_rejected(db_session, kind):
 @pytest.mark.parametrize("parent", ["user", "watchlist"])
 @pytest.mark.parametrize("load_relationships", [False, True])
 async def test_cascade_delete_preserves_other_users_lists(db_session, parent, load_relationships):
-    owner = make_user(watchlists=[Watchlist(name="ETF", items=[WatchlistItem(stock_code="0050")])])
+    owner = make_user(
+        watchlists=[Watchlist(name="ETF", items=[WatchlistItem(stock_code="0050", position=0)])]
+    )
     another = make_user(
-        watchlists=[Watchlist(name="ETF", items=[WatchlistItem(stock_code="0050")])]
+        watchlists=[Watchlist(name="ETF", items=[WatchlistItem(stock_code="0050", position=0)])]
     )
     db_session.add_all([owner, another])
     await db_session.flush()

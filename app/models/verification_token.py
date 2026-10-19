@@ -3,7 +3,7 @@ from ipaddress import IPv4Address, IPv6Address
 from typing import TYPE_CHECKING
 from uuid import UUID, uuid4
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, LargeBinary, String, func
+from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, LargeBinary, String, func, text
 from sqlalchemy.dialects.postgresql import INET
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -22,7 +22,17 @@ class VerificationToken(Base):
         CheckConstraint(
             "consumed_at IS NULL OR consumed_at >= created_at", name="consumption_after_creation"
         ),
+        CheckConstraint(
+            "revoked_at IS NULL OR revoked_at >= created_at", name="revocation_after_creation"
+        ),
         Index("ix_verification_tokens_user_id_purpose", "user_id", "purpose"),
+        Index(
+            "uq_verification_tokens_pending",
+            "user_id",
+            "purpose",
+            unique=True,
+            postgresql_where=text("consumed_at IS NULL AND revoked_at IS NULL"),
+        ),
         {"schema": "app"},
     )
 
@@ -33,6 +43,7 @@ class VerificationToken(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
     consumed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_ip: Mapped[IPv4Address | IPv6Address | None] = mapped_column(INET)
 
     user: Mapped["User"] = relationship(back_populates="verification_tokens", lazy="raise")
