@@ -3,7 +3,7 @@
 本次實作 Email／密碼帳號的三張資料表、SQLAlchemy 2 ORM 模型與 Alembic migration。
 同一帳號允許多裝置登入，預留登出其他裝置、驗證 Email 與忘記密碼所需欄位。
 註冊／登入 API、密碼雜湊服務、Cookie／CSRF、寄信、到期清理及帳號恢復流程仍待後續實作。
-其他 table 繼續討論後才新增；TWSE 仍逐次請求，不寫行情資料庫、不快取。
+已接續新增 [自選清單兩表](watchlist-tables.md)，其他 table 繼續討論後才新增；TWSE 仍逐次請求，不寫行情資料庫、不快取。
 
 ## 模型與關聯
 
@@ -17,6 +17,8 @@
 erDiagram
     USERS ||--o{ AUTH_SESSIONS : has
     USERS ||--o{ VERIFICATION_TOKENS : receives
+    USERS ||--o{ WATCHLISTS : owns
+    WATCHLISTS ||--o{ WATCHLIST_ITEMS : contains
 ```
 
 模型集中由 `app/models/__init__.py` 匯出，Alembic 匯入套件後即可取得完整 metadata。
@@ -88,6 +90,7 @@ erDiagram
 
 所有時間欄位均為 TIMESTAMPTZ，應用程式使用帶時區的 UTC datetime，顯示時才轉 Asia/Taipei。
 兩張子表的外鍵皆為 `ON DELETE CASCADE`，明確硬刪除帳號時會刪除其私有 Session 與 Token。
+新增的自選清單與項目同樣會在硬刪除帳號時 cascade 刪除。
 一般軟刪除只設定 `deleted_at`，不觸發 cascade；未來停用／刪除帳號服務需明確撤銷 Session。
 
 ## 遷移與驗證
@@ -100,7 +103,7 @@ uv run alembic check
 RUN_DB_TESTS=1 uv run pytest tests/test_database.py -q
 ```
 
-`0002_account_tables` 接續 `0001_create_schemas`，只建立三張 `app` 資料表與索引；`market` 保持沒有資料表。
+`0002_account_tables` 接續 `0001_create_schemas`，只建立三張帳號表與索引；後續 `0003_watchlist_tables` 再新增自選清單兩表。最新 head 共五張 `app` 資料表，`market` 保持沒有資料表。
 回退會刪除三張帳號表及其資料，只應在可丟棄的測試資料庫驗證：
 
 ```bash

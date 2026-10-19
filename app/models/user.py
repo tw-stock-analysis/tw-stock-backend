@@ -10,6 +10,7 @@ from app.db.base import Base
 if TYPE_CHECKING:
     from app.models.auth_session import AuthSession
     from app.models.verification_token import VerificationToken
+    from app.models.watchlist import Watchlist
 
 
 class User(Base):
@@ -47,6 +48,12 @@ class User(Base):
         lazy="raise",
     )
     verification_tokens: Mapped[list["VerificationToken"]] = relationship(
+        back_populates="user",
+        cascade="save-update, merge, delete, delete-orphan",
+        passive_deletes=True,
+        lazy="raise",
+    )
+    watchlists: Mapped[list["Watchlist"]] = relationship(
         back_populates="user",
         cascade="save-update, merge, delete, delete-orphan",
         passive_deletes=True,

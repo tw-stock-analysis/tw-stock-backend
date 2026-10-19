@@ -1,8 +1,8 @@
 # PostgreSQL 資料模型
 
-目前已實作 `app.users`、`app.auth_sessions`、`app.verification_tokens` 三張帳號表，使用 SQLAlchemy ORM 與 Alembic；欄位、約束與驗證方式以 [帳號資料表](account-tables.md) 為準。
+目前已實作 `app.users`、`app.auth_sessions`、`app.verification_tokens` 三張帳號表與 `app.watchlists`、`app.watchlist_items` 兩張自選股表，使用 SQLAlchemy ORM 與 Alembic；欄位、約束與驗證方式以 [帳號資料表](account-tables.md) 及 [自選清單資料表](watchlist-tables.md) 為準。
 
-**下方保留早期完整產品構想，尚未逐項確認，不是目前 migration 的規格。** 其中 `auth_tokens` 舊命名、匿名 Session／雙重到期時間、其他使用者表與市場資料表均未實作。本次採 `verification_tokens` 與已登入使用者的一對多 Session；其他 table 待討論。行情維持逐次向 TWSE 請求、不入庫、不快取，`market` schema 目前沒有資料表。
+**下方保留早期完整產品構想，尚未逐項確認，不是目前 migration 的規格。** 其中 `auth_tokens` 舊命名、匿名 Session／雙重到期時間、自選股的 instrument 外鍵／版本欄位／清單名稱唯一性、偏好設定及市場資料表均未實作。目前自選股僅保存市場與代碼，其他 table 待討論。行情維持逐次向 TWSE 請求、不入庫、不快取，`market` schema 目前沒有資料表。
 
 資料庫連線設定保存在 backend/.env；啟動與遷移步驟見 [README](../README.md)。
 
