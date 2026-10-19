@@ -47,6 +47,18 @@ curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
 
 前端 `/stocks` 可搜尋選股，`/stocks/{code}` 依序取得成交、估值與資券，分別標示日期、取得時間及失敗狀態；來源未提供的資券日期不自行補上。完整契約與 154 項整合驗收見 [個股研究 API](docs/stock-research-api.md)。
 
+## 帳號資料表（SQLAlchemy ORM）
+
+已建立 `app.users`、`app.auth_sessions`、`app.verification_tokens` 三張帳號表的 SQLAlchemy 2 ORM 模型及 Alembic migration，支援 Email 唯一性、一對多裝置 Session 與驗證 Token 欄位。註冊／登入、Cookie 與寄信 API 尚未實作，其他 table 待後續討論。TWSE 行情維持逐次請求、不入庫、不快取。
+
+```bash
+uv run alembic upgrade head
+uv run alembic check
+RUN_DB_TESTS=1 uv run pytest tests/test_database.py -q
+```
+
+詳細欄位、關聯與限制見 [帳號資料表](docs/account-tables.md)。
+
 ## Nginx 整站入口（Docker Compose）
 
 兩個儲存庫放在同一層，前端需使用包含 Nginx Dockerfile 的版本：
