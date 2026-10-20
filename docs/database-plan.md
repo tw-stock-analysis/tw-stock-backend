@@ -1,5 +1,11 @@
 # PostgreSQL 資料模型
 
+目前已實作 `app.users`、`app.auth_sessions`、`app.verification_tokens` 三張帳號表與 `app.watchlists`、`app.watchlist_items` 兩張自選股表，使用 SQLAlchemy ORM 與 Alembic；欄位、約束與驗證方式以 [帳號資料表](account-tables.md) 及 [自選清單資料表](watchlist-tables.md) 為準。
+
+目前 `0004_account_rules` 已加入 Email 部分唯一索引、清單名稱唯一、延後檢查排序唯一與驗證 Token 撤銷欄位；服務支援 10 份／100 檔上限、即時股票驗證、軟刪除撤銷憑證及失效超過 30 天清理。見 [目前 ER 圖](database-er.md) 與 [服務說明](account-services.md)。
+
+**下方保留早期完整產品構想，尚未逐項確認，不是目前 migration 的規格。** 其中 `auth_tokens` 舊命名、匿名 Session／雙重到期時間、自選股的 instrument 外鍵／版本欄位、偏好設定及市場資料表均未實作。目前自選股僅保存市場與代碼，其他 table 待討論。行情維持逐次向 TWSE 請求、不入庫、不快取，`market` schema 目前沒有資料表。
+
 資料庫連線設定保存在 backend/.env；啟動與遷移步驟見 [README](../README.md)。
 
 審查補充（下列表格未逐項展開的欄位也須實作）：

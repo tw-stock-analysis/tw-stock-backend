@@ -47,6 +47,27 @@ curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
 
 前端 `/stocks` 可搜尋選股，`/stocks/{code}` 依序取得成交、估值與資券，分別標示日期、取得時間及失敗狀態；來源未提供的資券日期不自行補上。完整契約與 154 項整合驗收見 [個股研究 API](docs/stock-research-api.md)。
 
+## 帳號與自選股資料表（SQLAlchemy ORM）
+
+已建立 `app.users`、`app.auth_sessions`、`app.verification_tokens` 三張帳號表的 SQLAlchemy 2 ORM 模型及 Alembic migration，支援 Email 唯一性、一對多裝置 Session 與驗證 Token 欄位。註冊／登入、Cookie 與寄信 API 尚未實作，其他 table 待後續討論。TWSE 行情維持逐次請求、不入庫、不快取。
+
+另新增 `app.watchlists`、`app.watchlist_items`：每人最多 10 份清單、每份最多 100 檔，清單名稱不分大小寫唯一，股票不重複、排序於 commit 時唯一。已補上服務層的歸屬檢查、即時 TWSE 驗證、並發保護、軟刪除撤銷憑證與一次性 Token 消耗；API 與前端尚未串接。
+
+軟刪除帳號會釋出 Email，重新註冊取得新 user_id，不繼承舊資料。清理指令預設刪除失效超過 30 天的 Session／驗證 Token，支援預覽：
+
+```bash
+uv run python -m app.services.auth_cleanup --dry-run
+uv run python -m app.services.auth_cleanup
+```
+
+```bash
+uv run alembic upgrade head
+uv run alembic check
+RUN_DB_TESTS=1 uv run pytest tests/test_database.py tests/test_watchlists.py tests/test_account_services.py -q
+```
+
+詳細內容見 [目前 ER 圖](docs/database-er.md)、[帳號資料表](docs/account-tables.md)、[自選清單資料表](docs/watchlist-tables.md) 及 [服務／遷移／清理排程](docs/account-services.md)。
+
 ## Nginx 整站入口（Docker Compose）
 
 兩個儲存庫放在同一層，前端需使用包含 Nginx Dockerfile 的版本：
