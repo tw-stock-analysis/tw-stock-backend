@@ -25,7 +25,12 @@ class Settings(BaseSettings):
     postgres_port: int = Field(default=5432, ge=1, le=65535)
     database_url: str | None = None
     auth_allowed_origins: list[str] = Field(
-        default_factory=lambda: ["http://localhost:8080", "http://127.0.0.1:8080"]
+        default_factory=lambda: [
+            "http://localhost:3007",
+            "http://127.0.0.1:3007",
+            "http://localhost:8080",
+            "http://127.0.0.1:8080",
+        ]
     )
     password_max_concurrency: int = Field(default=2, ge=1, le=8)
 

@@ -139,11 +139,13 @@ async function logout(otherDevices = false) {
 
 ```dotenv
 APP_ENV=development
-AUTH_ALLOWED_ORIGINS=["http://localhost:8080","http://127.0.0.1:8080"]
+AUTH_ALLOWED_ORIGINS=["http://localhost:3007","http://127.0.0.1:3007","http://localhost:8080","http://127.0.0.1:8080"]
 PASSWORD_MAX_CONCURRENCY=2
 ```
 
-Origin 必須精確包含實際 scheme／host／port，不加結尾 `/`。若改用其他本機同源入口（例如 8000 或開發伺服器的代理入口），同步調整 JSON 陣列。正式部署例如：
+Vite 開發入口為 `3007`，將 `/api/*` 代理至 FastAPI `8000`；Nginx 入口仍為 `8080`。兩者對瀏覽器皆採同源相對路徑，不需要開 CORS。前端使用 `.env` 的 `FRONTEND_PORT=3007` 與 `API_PROXY_TARGET=http://127.0.0.1:8000`。既有 `.env` 會覆蓋程式預設，因此更換 port 時須同步更新前後端設定。
+
+Origin 必須精確包含實際 scheme／host／port，不加結尾 `/`。若改用其他本機同源入口，同步調整 JSON 陣列。正式部署例如：
 
 ```dotenv
 APP_ENV=production

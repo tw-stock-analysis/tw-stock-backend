@@ -82,6 +82,8 @@ Email／密碼登入採 `pwdlib` Argon2id，必須是已驗證 Email、active �
 
 三個 POST 皆要求 `Origin` 精確符合 `AUTH_ALLOWED_ORIGINS`、`X-CSRF-Protection: 1` 與 `Content-Type: application/json`；登出及登出其他裝置不接受 body。採同源 Nginx 入口，未開放跨來源 Cookie CORS。正式環境需明確設定 HTTPS origins，使用 `__Host-session; Secure; HttpOnly; SameSite=Lax; Path=/`，不設 Domain；本機開發使用 `session` Cookie。
 
+本機前端預設使用 Vite `3007`，將相對路徑 `/api/*` 代理至 FastAPI `8000`；瀏覽器仍是同源請求。CSRF 來源預設包含 localhost／127.0.0.1 的 `3007` 與 Nginx `8080`。若既有 `.env` 已覆寫 `AUTH_ALLOWED_ORIGINS`，請同步加入實際的開發入口；這是來源檢查，不會啟用 CORS。
+
 登入限流為每程序每 IP 30 次／60 秒、每 Email 10 次／60 秒，另限制 Argon2 並行數。多 worker／replica 的總限流須由可信入口共用處理；應用程式只採用由可信代理整理後的 client IP。完整回應、錯誤、部署設定、測試與本機測試帳號建立方式見 [認證 API](docs/authentication-api.md)。本輪沿用五張資料表，migration head 仍為 `0004_account_rules`。
 
 ## Nginx 整站入口（Docker Compose）
@@ -124,7 +126,7 @@ docker compose --env-file .env up -d --build --wait
 | `WEB_BIND_ADDRESS` | `127.0.0.1` | Nginx 對主機的綁定位址 |
 | `WEB_PORT` | `8080` | 瀏覽器入口連接埠 |
 | `APP_ENV` | 範例為 `development` | `production` 時停用 Swagger 與 OpenAPI 文件 |
-| `AUTH_ALLOWED_ORIGINS` | 本機 localhost／127.0.0.1 的 8080 入口 | JSON 陣列；精確比對瀏覽器 Origin，正式環境僅允許 HTTPS |
+| `AUTH_ALLOWED_ORIGINS` | 本機 localhost／127.0.0.1 的 Vite 3007 與 Nginx 8080 入口 | JSON 陣列；精確比對瀏覽器 Origin，正式環境僅允許 HTTPS |
 | `PASSWORD_MAX_CONCURRENCY` | `2` | 每個後端程序同時執行的 Argon2 工作數 |
 
 目前提供 HTTP 部署入口；公開 HTTPS 部署需另接網域及憑證。Nginx 是此配置的最外層入口，會重設用戶端傳入的轉送標頭；若日後前面再加負載平衡器或 TLS 入口，需配合調整可信代理與協定標頭。FastAPI 僅在內部網路信任 Nginx 傳入的代理資訊。
