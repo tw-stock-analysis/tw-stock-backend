@@ -1,8 +1,8 @@
 # 帳號資料表
 
-本次實作 Email／密碼帳號的三張資料表、SQLAlchemy 2 ORM 模型與 Alembic migration。
-同一帳號允許多裝置登入，預留登出其他裝置、驗證 Email 與忘記密碼所需欄位。
-已補上帳號、Session、驗證 Token 服務與到期清理指令，詳見 [帳號與清單服務](account-services.md)。HTTP 認證 API、密碼雜湊／密碼比對、Cookie／CSRF、寄信與帳號恢復流程仍待後續實作。
+已實作 Email／密碼帳號的三張資料表、SQLAlchemy 2 ORM 模型與 Alembic migration。
+同一帳號允許多裝置登入，支援登出其他裝置，並備妥驗證 Email 與忘記密碼所需欄位及內部服務。
+帳號、Session、驗證 Token 與到期清理介面詳見 [帳號與清單服務](account-services.md)。[後端認證 API](authentication-api.md) 已提供 Argon2id 密碼比對、Cookie／CSRF、固定 7 天登入與裝置管理；前端已接上登入／登出與裝置管理；公開註冊、寄信及帳號恢復入口留待後續實作。本輪認證不新增表或 migration。
 已接續新增 [自選清單兩表](watchlist-tables.md)，其他 table 繼續討論後才新增；TWSE 仍逐次請求，不寫行情資料庫、不快取。
 
 ## 模型與關聯
@@ -31,7 +31,7 @@ erDiagram
 | --- | --- | --- |
 | `id` | UUID | PK，SQLAlchemy insert 時產生 UUID v4 |
 | `email` | VARCHAR(254) | NOT NULL；ORM 指派時 `strip().lower()`；僅未刪除帳號需唯一 |
-| `password_hash` | TEXT | NOT NULL、不得空字串；預定儲存完整 Argon2id 編碼結果 |
+| `password_hash` | TEXT | NOT NULL、不得空字串；儲存完整 Argon2id 編碼結果 |
 | `display_name` | VARCHAR(100) | 可 NULL |
 | `status` | VARCHAR(32) | NOT NULL；預設 `pending_verification`；僅允許 `pending_verification`、`active`、`disabled` |
 | `email_verified_at` | TIMESTAMPTZ | 可 NULL |
@@ -41,10 +41,10 @@ erDiagram
 
 - Email 採不分大小寫的帳號規則；不移除 Gmail 的點或 `+alias`。
 - DB CHECK 同時要求 Email 非空、已轉小寫且沒有前後一般空白；繞過 ORM 的非標準值會被拒絕。
-- Email 格式驗證由未來 API 的輸入 schema 負責，ORM 正規化不等於完整信箱格式驗證。
+- 登入 schema 檢查 Email 非空、長度及 UTF-8，並執行 `strip().lower()`；不做完整信箱格式驗證或寄信驗證。註冊入口的格式政策仍待實作，ORM 正規化不等於信箱所有權證明。
 - Partial unique index `uq_users_active_email` 為 `lower(email) WHERE deleted_at IS NULL`；停用但未刪除的帳號仍占用 Email。
 - 軟刪除後可重新註冊，取得全新 UUID，不繼承舊帳號的清單、Session 或驗證 Token。以 Email 找目前帳號時必須篩選 `deleted_at IS NULL`。
-- 密碼雜湊本次僅定義儲存欄位；不執行 MD5／SHA-256 密碼雜湊，不另存 salt，也沒有實作密碼設定 hook。
+- `PasswordService` 以 `pwdlib` 產生／驗證 Argon2id；salt 與參數包含在完整編碼中，不另存 salt。`AccountService.create/reset_password` 接受可信呼叫端預先計算的 hash，不在 ORM 欄位設定時自動雜湊。HTTP 登入不接受使用者自行提供的 hash。
 - `updated_at` 沒有 DB trigger；直接使用原生 SQL 更新時，呼叫端必須明確更新時間。
 
 ## `app.auth_sessions`
@@ -62,12 +62,12 @@ erDiagram
 | `created_ip` | INET | 可 NULL，支援 IPv4／IPv6 |
 
 - 一次登入建立一筆 Session，支援同帳號多裝置。這張表只接受已關聯使用者的 Session。
-- 隨機 Token 的原文預定透過 HttpOnly Cookie 傳遞，DB 僅存 SHA-256 digest；不使用密碼用的 Argon2id 處理隨機 Token。
+- HTTP 登入透過 HttpOnly Cookie 傳遞隨機 Token 原文，DB 僅存 SHA-256 digest；不使用密碼用的 Argon2id 處理隨機 Token。沒有 JWT／Refresh Token 欄位或續期 API。
 - `SessionService` 使用 `secrets.token_urlsafe(32)` 產生憑證，DB 僅存 SHA-256 digest；原文只經回傳值交給呼叫端。
 - `revoke_others()` 會驗證目前 Session 所屬帳號及有效性，保留目前裝置並撤銷其他 Session。
 - `user_id` 與 `expires_at` 各有索引，供裝置查詢、撤銷與到期清理使用。
-- `authenticate()` 檢查未撤銷、未到期、帳號未刪除且狀態為 active；不把 user_id 本身視為登入證明。
-- Session 有效期限、續期與活動時間更新頻率尚待登入流程討論，欄位沒有預設固定天數。
+- HTTP 使用的 `AuthenticationService.authenticate()` 檢查 Token 格式、雜湊、未撤銷、未到期、帳號未刪除、active 且 Email 已驗證；不把 user_id 本身視為登入證明。較低層 `SessionService` 仍保留供可信內部流程使用。
+- HTTP 登入的 `expires_at` 為 DB 目前時間加 7 天；每次認證更新 `last_seen_at`，不延長到期時間，沒有閒置自動續期。資料表本身不設定固定天數，低層憑證服務仍接受明確 TTL。
 
 ## `app.verification_tokens`
 

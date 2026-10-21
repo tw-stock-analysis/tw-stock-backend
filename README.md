@@ -28,7 +28,7 @@ API 文件：http://localhost:8000/api/v1/docs
 
 ## TWSE 交易資料 API
 
-每次查詢皆由 FastAPI 直接呼叫 [TWSE OpenAPI](https://openapi.twse.com.tw/)，不寫入或讀取市場資料庫、不提供行情快取或舊資料回退。提供 44 個對應端點，涵蓋價格、成交、指數、外資持股、資券、當沖、鉅額、注意／處置、日曆、權證交易與 ETF 定期定額統計。不含公司基本資料、營收、財報、其他供應商及 auth。
+每次查詢皆由 FastAPI 直接呼叫 [TWSE OpenAPI](https://openapi.twse.com.tw/)，不寫入或讀取市場資料庫、不提供行情快取或舊資料回退。提供 44 個對應端點，涵蓋價格、成交、指數、外資持股、資券、當沖、鉅額、注意／處置、日曆、權證交易與 ETF 定期定額統計。不含公司基本資料、營收、財報及其他供應商；行情端點維持公開存取。
 
 使用 `app/api/v1/endpoints` → `app/services` 的分層，`v1/router.py` 掛載路由，輸入／輸出 BaseModel 位於 `app/schemas`。前端從 `/api/v1/twse/datasets` 取得功能目錄，再呼叫各 API 專屬端點：
 
@@ -43,15 +43,15 @@ curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
 
 ## 個股搜尋與詳情
 
-新增 4 個明確宣告的端點：`GET /api/v1/stocks`（q／page／limit）、`GET /api/v1/stocks/{code}`、`GET /api/v1/stocks/{code}/valuation`、`GET /api/v1/stocks/{code}/margin`。每次各自重新取得既有 TWSE 來源全集，在記憶體中搜尋或精確比對代碼，保留精確字串，不儲存或快取行情。連同原始端點、目錄及健康檢查，目前共 **51 個 API 路由**。
+新增 4 個明確宣告的端點：`GET /api/v1/stocks`（q／page／limit）、`GET /api/v1/stocks/{code}`、`GET /api/v1/stocks/{code}/valuation`、`GET /api/v1/stocks/{code}/margin`。每次各自重新取得既有 TWSE 來源全集，在記憶體中搜尋或精確比對代碼，保留精確字串，不儲存或快取行情。連同原始端點、目錄及健康檢查，共 **51 個公開 API 路由**；加上以下 5 個認證端點，目前合計 **56 個 API 路由**，不計 Swagger 文件頁。
 
 前端 `/stocks` 可搜尋選股，`/stocks/{code}` 依序取得成交、估值與資券，分別標示日期、取得時間及失敗狀態；來源未提供的資券日期不自行補上。完整契約與 154 項整合驗收見 [個股研究 API](docs/stock-research-api.md)。
 
 ## 帳號與自選股資料表（SQLAlchemy ORM）
 
-已建立 `app.users`、`app.auth_sessions`、`app.verification_tokens` 三張帳號表的 SQLAlchemy 2 ORM 模型及 Alembic migration，支援 Email 唯一性、一對多裝置 Session 與驗證 Token 欄位。註冊／登入、Cookie 與寄信 API 尚未實作，其他 table 待後續討論。TWSE 行情維持逐次請求、不入庫、不快取。
+已建立 `app.users`、`app.auth_sessions`、`app.verification_tokens` 三張帳號表的 SQLAlchemy 2 ORM 模型及 Alembic migration，支援 Email 唯一性、一對多裝置 Session 與驗證 Token 欄位。後端登入、Cookie 驗證與裝置管理已接上；前端已接上登入／登出與裝置管理；公開註冊及寄信留待後續實作。TWSE 行情維持逐次請求、不入庫、不快取。
 
-另新增 `app.watchlists`、`app.watchlist_items`：每人最多 10 份清單、每份最多 100 檔，清單名稱不分大小寫唯一，股票不重複、排序於 commit 時唯一。已補上服務層的歸屬檢查、即時 TWSE 驗證、並發保護、軟刪除撤銷憑證與一次性 Token 消耗；API 與前端尚未串接。
+另新增 `app.watchlists`、`app.watchlist_items`：每人最多 10 份清單、每份最多 100 檔，清單名稱不分大小寫唯一，股票不重複、排序於 commit 時唯一。已補上服務層的歸屬檢查、即時 TWSE 驗證、並發保護、軟刪除撤銷憑證與一次性 Token 消耗；自選清單 API 與前端尚未串接。
 
 軟刪除帳號會釋出 Email，重新註冊取得新 user_id，不繼承舊資料。清理指令預設刪除失效超過 30 天的 Session／驗證 Token，支援預覽：
 
@@ -67,6 +67,24 @@ RUN_DB_TESTS=1 uv run pytest tests/test_database.py tests/test_watchlists.py tes
 ```
 
 詳細內容見 [目前 ER 圖](docs/database-er.md)、[帳號資料表](docs/account-tables.md)、[自選清單資料表](docs/watchlist-tables.md) 及 [服務／遷移／清理排程](docs/account-services.md)。
+
+## 後端登入與 Token 驗證
+
+Email／密碼登入採 `pwdlib` Argon2id，必須是已驗證 Email、active 且未刪除的帳號。Session 使用隨機 opaque Token 與 HttpOnly Cookie，資料庫只保存 SHA-256 digest；固定 7 天到期，活動時間更新不延長期限，沒有 JWT 或 Refresh Token。
+
+| 方法／路徑 | 用途 |
+| --- | --- |
+| `POST /api/v1/auth/login` | 驗證 Email／密碼並設定登入 Cookie |
+| `GET /api/v1/me` | 取得目前使用者 |
+| `POST /api/v1/auth/logout` | 撤銷目前 Session、清 Cookie，回 204 |
+| `GET /api/v1/me/sessions` | 列出自己的有效登入裝置 |
+| `POST /api/v1/me/sessions/revoke-others` | 保留目前裝置、撤銷其他 Session，回 204 |
+
+三個 POST 皆要求 `Origin` 精確符合 `AUTH_ALLOWED_ORIGINS`、`X-CSRF-Protection: 1` 與 `Content-Type: application/json`；登出及登出其他裝置不接受 body。採同源 Nginx 入口，未開放跨來源 Cookie CORS。正式環境需明確設定 HTTPS origins，使用 `__Host-session; Secure; HttpOnly; SameSite=Lax; Path=/`，不設 Domain；本機開發使用 `session` Cookie。
+
+本機前端預設使用 Vite `3007`，將相對路徑 `/api/*` 代理至 FastAPI `8000`；瀏覽器仍是同源請求。CSRF 來源預設包含 localhost／127.0.0.1 的 `3007` 與 Nginx `8080`。若既有 `.env` 已覆寫 `AUTH_ALLOWED_ORIGINS`，請同步加入實際的開發入口；這是來源檢查，不會啟用 CORS。
+
+登入限流為每程序每 IP 30 次／60 秒、每 Email 10 次／60 秒，另限制 Argon2 並行數。多 worker／replica 的總限流須由可信入口共用處理；應用程式只採用由可信代理整理後的 client IP。完整回應、錯誤、部署設定、測試與本機測試帳號建立方式見 [認證 API](docs/authentication-api.md)。本輪沿用五張資料表，migration head 仍為 `0004_account_rules`。
 
 ## Nginx 整站入口（Docker Compose）
 
@@ -84,7 +102,7 @@ flowchart LR
     Nginx --> Static[React 靜態檔案]
     Nginx -->|/api 與 /api/*，保留完整路徑| API[FastAPI :8000]
     API -->|每次交易查詢| TWSE[TWSE OpenAPI]
-    API -->|既有健康檢查| DB[(PostgreSQL)]
+    API -->|健康檢查與認證／私人資料服務| DB[(PostgreSQL)]
 ```
 
 在後端目錄準備 `.env`，將 `POSTGRES_PASSWORD` 設為自己的密碼，再執行：
@@ -108,6 +126,8 @@ docker compose --env-file .env up -d --build --wait
 | `WEB_BIND_ADDRESS` | `127.0.0.1` | Nginx 對主機的綁定位址 |
 | `WEB_PORT` | `8080` | 瀏覽器入口連接埠 |
 | `APP_ENV` | 範例為 `development` | `production` 時停用 Swagger 與 OpenAPI 文件 |
+| `AUTH_ALLOWED_ORIGINS` | 本機 localhost／127.0.0.1 的 Vite 3007 與 Nginx 8080 入口 | JSON 陣列；精確比對瀏覽器 Origin，正式環境僅允許 HTTPS |
+| `PASSWORD_MAX_CONCURRENCY` | `2` | 每個後端程序同時執行的 Argon2 工作數 |
 
 目前提供 HTTP 部署入口；公開 HTTPS 部署需另接網域及憑證。Nginx 是此配置的最外層入口，會重設用戶端傳入的轉送標頭；若日後前面再加負載平衡器或 TLS 入口，需配合調整可信代理與協定標頭。FastAPI 僅在內部網路信任 Nginx 傳入的代理資訊。
 

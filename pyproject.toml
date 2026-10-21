@@ -15,6 +15,7 @@ dependencies = [
   "pydantic-settings>=2.7,<3",
   "alembic>=1.14,<2",
   "httpx>=0.28,<1",
+  "pwdlib[argon2]>=0.3,<1",
 ]
 
 [dependency-groups]

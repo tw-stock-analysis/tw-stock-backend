@@ -1,6 +1,6 @@
 # 帳號與自選清單服務
 
-本輪不新增 HTTP 路由、股票主檔或行情儲存；現有 API 仍為 51 條。五張 `app` 表由 SQLAlchemy ORM 操作，Alembic 最新版為 `0004_account_rules`。完整欄位與約束見 [ER 圖](database-er.md)。
+五張 `app` 表由 SQLAlchemy ORM 操作，Alembic 最新版為 `0004_account_rules`。帳號與清單服務已接續新增 [認證 API](authentication-api.md)，目前為 51 個公開路由加 5 個認證路由，共 56 個。認證沿用既有表；自選清單 HTTP API、股票主檔與行情儲存未加入。完整欄位與約束見 [ER 圖](database-er.md)。
 
 ## 已確認的規則
 
@@ -10,6 +10,7 @@
 - 同清單 position 唯一，使用 `DEFERRABLE INITIALLY DEFERRED`，支援單交易交換順序。
 - 同使用者、同用途最多一張未消耗且未撤銷的驗證 Token。新核發會撤銷同用途舊列，包含已過期者。
 - Session／驗證 Token 失效超過 30 天才清理，執行頻率由部署排程決定。
+- HTTP 登入僅接受已驗證 Email 的 active 帳號，Session 固定 7 天；每次驗證更新 `last_seen_at`，不延長 `expires_at`。
 
 ## 服務介面
 
@@ -18,6 +19,12 @@
 
 | 服務 | 方法 | 行為 |
 | --- | --- | --- |
+| `PasswordService` | `hash(password)`、`verify(password, encoded)` | `pwdlib` Argon2id，受限並行且在 event loop 外執行；不存在帳號／不合法 hash 經 dummy hash 驗證後失敗 |
+| `AuthenticationService` | `login(email, password, ...)` | 讀取 hash 後結束交易，比對密碼，再鎖使用者重新確認 hash／狀態；同交易建立固定 7 天 Session |
+| | `authenticate(token)` | 驗證 Token 格式、雜湊、撤銷、期限、帳號 active／未刪除／已驗證；更新活動時間並回傳安全 DTO |
+| | `list_sessions(current)` | 在鎖內再次檢查目前 Session，僅列出本人的有效裝置 |
+| | `logout(token)` | 可重複執行，撤銷該 Token；缺少／未知／過期憑證仍可完成登出 |
+| | `revoke_others(current)` | 在同一交易確認目前 Session 有效，保留目前裝置並撤銷同帳號其他 Session |
 | `AccountService` | `create(email, password_hash=...)` | 儲存預先計算的密碼雜湊，建立待驗證帳號；Email 衝突回 `EMAIL_IN_USE` |
 | | `soft_delete(user_id)` | 鎖定帳號、軟刪除、停用及撤銷所有未撤銷 Session／待用驗證 Token，重複呼叫安全 |
 | | `verify_email(token)` | 原子消耗驗證信箱 Token，記錄驗證時間並啟用帳號，不自動登入 |
@@ -30,15 +37,17 @@
 | `WatchlistService` | `create`、`list`、`get`、`rename`、`delete` | 檢查帳號與清單歸屬、名稱唯一及清單容量 |
 | | `add_item`、`remove_item`、`reorder` | 新增前即時驗證來源；保護容量、排序及父清單更新時間 |
 
-`password_hash` 必須由可信的密碼雜湊函式預先產生完整 Argon2id 編碼結果。這些內部服務只檢查 Argon2id 前綴，沒有實作雜湊計算、密碼比對、完整 Email 格式驗證或密碼政策；未來 HTTP 認證入口須負責，不能接受使用者自行提供的 hash。昂貴的雜湊計算應在交易之外完成。
-`SessionService.issue()` 本身不驗證密碼；user_id 必須來自已完成認證的可信流程。Cookie／CSRF、寄信、驗證與重設流程的公開回應仍待 HTTP API 設計。
-`ttl` 必須由呼叫端明確給正值，尚未固定 Session／驗證連結有效天數；清理的 30 天不是登入有效期。
+`AccountService` 的 `password_hash` 必須由可信的 `PasswordService.hash()` 預先產生完整 Argon2id 編碼結果；內部寫入方法仍只檢查前綴，不能接受 HTTP 使用者自行提供的 hash。HTTP 登入入口已實作密碼比對；尚未提供公開註冊、完整信箱格式驗證或註冊密碼強度政策。昂貴的雜湊計算在交易之外完成。
+`SessionService` 保留為較低層的內部憑證服務，其 `issue()` 本身不驗證密碼。HTTP 流程使用 `AuthenticationService`，將登入與鎖內 hash 重查整合，且額外要求已驗證 Email；不能把低層 `issue(user_id, ...)` 直接暴露為登入 API。Cookie／CSRF 規則見 [認證 API](authentication-api.md)，寄信、公開驗證與重設入口留待後續。
+低層 `SessionService`／`VerificationService` 的 `ttl` 仍由可信呼叫端明確給正值；HTTP Session 已固定為 7 天，驗證連結的正式期限尚待註冊／寄信流程確認。清理的 30 天不是登入有效期。
 憑證原文只在 `IssuedCredential.value` 提供，排除於 repr，資料庫及清理輸出沒有原文，不應將回傳物件轉成一般日誌。
 
 ## 交易與並發
 
 所有會修改使用者私人資料的服務，鎖定順序一致為使用者列 → 清單／憑證列。清單容量在鎖內檢查後寫入，沒有單純先 COUNT 後無鎖 INSERT 的空窗。
 跨帳號清單操作回 `WATCHLIST_NOT_FOUND`，避免暴露另一位使用者的清單。呼叫端仍須提供已驗證的 user_id，這不等於新增了 PostgreSQL RLS。
+
+登入在不持有 DB 連線時驗證密碼，之後鎖使用者列，重新比對讀取時的 hash、Email、帳號及驗證狀態，再新增 Session。重設密碼與軟刪除使用同一使用者鎖，避免舊密碼在憑證撤銷之後建立新的有效 Session。裝置清單及登出其他裝置也會在交易內重新確認目前 Session，不能只依賴較早完成的 HTTP dependency 驗證。
 
 新增股票的流程：
 

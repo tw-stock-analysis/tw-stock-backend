@@ -193,13 +193,20 @@ async def test_new_columns_are_exposed_and_large_responses_are_bounded(monkeypat
     assert caught.value.code == "SOURCE_DATA_INVALID"
 
 
-def test_openapi_is_explicit_typed_and_has_no_auth(api):
+def test_openapi_keeps_public_market_endpoints_explicit_typed_and_unauthenticated(api):
     schema = api.openapi()
-    assert len(schema["paths"]) == 51  # 44 TWSE + catalogue + two health + four stock views.
+    public_paths = {
+        path: operations
+        for path, operations in schema["paths"].items()
+        if path.startswith(("/api/v1/twse/", "/api/v1/stocks", "/api/v1/health/"))
+    }
+    assert len(public_paths) == 51  # 44 TWSE + catalogue + two health + four stock views.
+    assert not schema.get("security")
+    for operations in public_paths.values():
+        assert not operations["get"].get("security")
     for dataset in DATASETS:
         operation = schema["paths"][dataset.endpoint]["get"]
         assert operation["responses"]["200"]["content"]["application/json"]["schema"][
             "$ref"
         ].endswith("TradingResponse")
-    assert "securitySchemes" not in schema["components"]
     assert "SOURCE_NOT_CONFIGURED" not in json.dumps(schema)
