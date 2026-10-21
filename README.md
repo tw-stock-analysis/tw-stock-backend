@@ -49,7 +49,7 @@ curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
 
 ## 帳號與自選股資料表（SQLAlchemy ORM）
 
-已建立 `app.users`、`app.auth_sessions`、`app.verification_tokens` 三張帳號表的 SQLAlchemy 2 ORM 模型及 Alembic migration，支援 Email 唯一性、一對多裝置 Session 與驗證 Token 欄位。後端登入、Cookie 驗證與裝置管理已接上；公開註冊、寄信及前端認證畫面留待後續實作。TWSE 行情維持逐次請求、不入庫、不快取。
+已建立 `app.users`、`app.auth_sessions`、`app.verification_tokens` 三張帳號表的 SQLAlchemy 2 ORM 模型及 Alembic migration，支援 Email 唯一性、一對多裝置 Session 與驗證 Token 欄位。後端登入、Cookie 驗證與裝置管理已接上；前端已接上登入／登出與裝置管理；公開註冊及寄信留待後續實作。TWSE 行情維持逐次請求、不入庫、不快取。
 
 另新增 `app.watchlists`、`app.watchlist_items`：每人最多 10 份清單、每份最多 100 檔，清單名稱不分大小寫唯一，股票不重複、排序於 commit 時唯一。已補上服務層的歸屬檢查、即時 TWSE 驗證、並發保護、軟刪除撤銷憑證與一次性 Token 消耗；自選清單 API 與前端尚未串接。
 

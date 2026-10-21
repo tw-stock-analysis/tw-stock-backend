@@ -1,6 +1,6 @@
 # 後端登入與 Token 驗證
 
-本版提供 Email／密碼登入、目前使用者、登出及多裝置管理。Session 固定有效 7 天，到期重新登入。公開註冊、寄信、忘記密碼 HTTP 流程與前端登入畫面另行實作；目前的驗證信箱／重設密碼能力仍是可信內部服務。
+本版提供 Email／密碼登入、目前使用者、登出及多裝置管理。Session 固定有效 7 天，到期重新登入。前端已提供登入／登出與裝置管理畫面；公開註冊、寄信及忘記密碼 HTTP 流程另行實作；目前的驗證信箱／重設密碼能力仍是可信內部服務。
 
 新增 5 個認證端點，加上既有 51 個公開端點，共 56 個 API 路由。沿用 `users`、`auth_sessions`、`verification_tokens`、`watchlists`、`watchlist_items` 五張表，migration head 仍為 `0004_account_rules`。TWSE 查詢維持逐次請求、不存行情資料、不快取，也不因收到 Cookie 而查詢認證資料庫。
 
@@ -80,7 +80,7 @@ Argon2 工作在 event loop 外執行，每個後端程序預設最多 2 個同�
 | 503 `PASSWORD_SERVICE_BUSY`／`AUTH_CAPACITY_EXCEEDED` | 密碼工作或登入限制器容量已滿 |
 | 503 `DEPENDENCY_UNAVAILABLE` | 資料庫不可用 |
 
-前端之後接入時，私人請求的 `SESSION_INVALID` 應清除私人 UI 狀態並要求重新登入；`LOGIN_INVALID` 是登入失敗，不代表公開行情失敗。204 不可再呼叫 `response.json()`。
+前端已接入：私人請求的 `SESSION_INVALID` 應清除私人 UI 狀態並要求重新登入；`LOGIN_INVALID` 是登入失敗，不代表公開行情失敗。204 不可再呼叫 `response.json()`。
 
 ## 同源呼叫範例
 
@@ -131,7 +131,7 @@ async function logout(otherDevices = false) {
 }
 ```
 
-這是介面使用範例；本輪沒有修改前端頁面或前端 service。
+上述介面已由前端 /login 與 /account/sessions 串接，支援登入、重新整理還原身分、登出、私人 401 清理及裝置管理；公開行情仍可直接瀏覽。使用及驗證方式見[前端認證文件](https://github.com/tw-stock-analysis/tw-stock-frontend/blob/feat/cookie-auth/docs/authentication-ui.md)。
 
 ## 部署設定與限流
 
