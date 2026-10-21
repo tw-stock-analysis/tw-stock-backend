@@ -1,4 +1,4 @@
-"""Account writes with caller-prepared password hashes; no HTTP authentication endpoints."""
+"""Trusted account writes with hashes prepared outside the database transaction."""
 
 from uuid import UUID
 
@@ -15,8 +15,8 @@ from app.services.errors import ServiceError
 
 
 def require_password_hash(value: str) -> None:
-    # Password hashing/validation belongs to the future authentication boundary.
-    # These internal methods accept an already computed Argon2id encoded hash only.
+    # Trusted callers compute hashes using PasswordService before entering a DB
+    # transaction. This prefix check is not raw-password validation or hashing.
     if not value.startswith("$argon2id$"):
         raise ValueError("An already computed Argon2id password hash is required")
 

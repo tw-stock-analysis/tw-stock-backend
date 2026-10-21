@@ -1,10 +1,25 @@
 # API 契約 v1
 
-目前已交付的契約為 health 與 44 個逐次呼叫 TWSE 的交易端點，見 [TWSE 交易資料](twse-trading-api.md) 與 FastAPI OpenAPI。端點位於 `app/api/v1/endpoints`，`v1/router.py` 掛載，BaseModel 位於 `app/schemas`，HTTP 處理位於 `app/services`。沒有 auth、其他來源、行情匯入、行情資料表或查詢快取。
+## 目前已實作的契約
 
-下方保留的是早期完整產品構想，不是這輪已同意的設計或現有 API；其中快取、舊資料回退、資料庫行情、UUID 股票主檔、會員及財報等規劃均不適用於當前 TWSE 轉接功能。現有查詢每次向 TWSE 發送 HTTP，失敗直接回錯誤，不顯示舊資料。舊 `/instruments`、`/quotes`、`/market/status` 與匯入流程已從未合併分支移除。
+目前共 **56 個 API 路由**：44 個逐次呼叫 TWSE 的交易端點、1 個目錄、2 個 health、4 個個股研究端點，以及 5 個認證端點。以以下文件與實際 FastAPI OpenAPI 為準：
 
-## 1. 共通規則
+| 範圍 | 目前契約 |
+| --- | --- |
+| 公開行情與目錄 | [TWSE 交易資料](twse-trading-api.md) |
+| 公開個股搜尋與詳情 | [個股研究 API](stock-research-api.md) |
+| 後端登入／裝置管理 | [認證 API](authentication-api.md) |
+| 已實作但尚未提供自選清單 HTTP API 的服務 | [帳號與清單服務](account-services.md) |
+
+認證端點為 `POST /auth/login`、`GET /me`、`POST /auth/logout`、`GET /me/sessions`、`POST /me/sessions/revoke-others`，皆加 `/api/v1` 前綴。使用固定 7 天 opaque Cookie Session；POST 檢查明確 Origin、`X-CSRF-Protection: 1` 與 JSON Content-Type。沒有匿名 Session、`/auth/csrf`、Refresh Token 或閒置續期；登出及登出其他裝置沒有 body，回 204。登入錯誤統一 `LOGIN_INVALID`，私人認證失效為 `SESSION_INVALID`。
+
+端點位於 `app/api/v1/endpoints`，`v1/router.py` 掛載，BaseModel 位於 `app/schemas`，使用案例位於 `app/services`。公開行情查詢每次向 TWSE 發送 HTTP，失敗直接回錯誤，不儲存／快取行情或回退舊資料。所有 API 回應為 no-store。認證及內部私人資料服務使用既有五張 `app` 表，migration head 為 `0004_account_rules`；沒有股票主檔或行情表。
+
+## 歷史產品草案（以下不是目前契約）
+
+下方保留早期完整產品構想，尚未重新核准或完整實作。它包含與目前決策不同的匿名 Session、同步 CSRF Token、到期政策、認證回應、資料表及行情快取；不能據此呼叫現有 API 或判斷目前功能。公開註冊、寄信、帳號恢復 HTTP API 與前端認證畫面仍待後續；UUID 股票主檔、財報、行情匯入／舊資料回退也不在目前範圍。舊 `/instruments`、`/quotes`、`/market/status` 與匯入流程已從未合併分支移除。
+
+### 1. 共通規則（歷史草案）
 
 - 成功回應通常有 data；分頁有 pagination；市場資料有 meta。204 無 response body。
 - 日期 YYYY-MM-DD；時間 RFC3339 UTC；價格、財務小數、成交股數以字串傳送；ID 為字串 UUID。
@@ -32,7 +47,7 @@
 
 有有效舊資料時回 200 並標明 stale；合法「沒有財報」回 200 空資料及原因；股票不存在才回 404。500、503 不被 UI 解讀為零資料。
 
-## 2. 認證與會員
+### 2. 認證與會員（歷史草案）
 
 | 方法／路徑 | 輸入摘要 | 結果 |
 | --- | --- | --- |
@@ -54,7 +69,7 @@
 
 註冊／重寄信不自動登入，登入成功後前端重新載入私人資料。auth token 有效期與限制見後端文件。新增密碼長度上限及輸入格式時要同步 OpenAPI 與 UI，不能只在前端擋。
 
-## 3. 自選清單
+### 3. 自選清單（歷史草案）
 
 | 方法／路徑 | 輸入 | 回應與競態 |
 | --- | --- | --- |
@@ -69,7 +84,7 @@
 
 PUT／DELETE 單項可安全重試；每次實際變更 version+1。第一版每人最多 10 個清單、每清單 100 檔。列表不存在／非本人一律 404；標的不存在回 422 並指出欄位。下市且仍有主檔的標的可保留既有自選，禁止新增是否有必要留到產品使用資料後再決定，預設允許加入並顯示狀態。
 
-## 4. 公開股票與分析
+### 4. 公開股票與分析（歷史草案）
 
 | 方法／路徑 | 參數 | 回應重點 |
 | --- | --- | --- |
@@ -90,7 +105,7 @@ chart-data 預設近一年，起訖包含兩端，最多兩年、1,500 根，fro
 
 收益／財報列表的上限與資料實際覆蓋分開。請求合法但來源只有部分歷史時回 available_from/to、is_partial 與 warnings；不虛構完整覆蓋，也不以全部 0 補齊。此版不接受歷史 as_of 回測參數。
 
-## 5. 市場 metadata
+### 5. 市場 metadata（歷史草案）
 
 | 欄位 | 意義 |
 | --- | --- |
@@ -108,6 +123,6 @@ chart-data 預設近一年，起訖包含兩端，最多兩年、1,500 根，fro
 
 同一頁可有不同資料集版本；同一張 K 線及指標必須同版本。官方估值與自算比率以 method 分開。技術指標前段 null 的 reason 為 INSUFFICIENT_HISTORY；一般財務缺值區分 NOT_PUBLISHED、NOT_APPLICABLE、NON_POSITIVE_BASE、SOURCE_MISSING、INCOMPARABLE_PERIODS。
 
-## 6. 健康與文件
+### 6. 健康與文件（歷史草案）
 
 GET /health/live 只檢查程序，GET /health/ready 檢查 DB 等必要依賴；行情上游短暫失敗不讓會員服務整體掉出 readiness。回應不暴露連線字串。開發／測試環境提供 OpenAPI 文件，正式環境是否限制文件存取依部署策略實作。

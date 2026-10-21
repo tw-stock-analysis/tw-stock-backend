@@ -40,7 +40,19 @@ def register_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(ServiceError)
     async def service_error(request: Request, exc: ServiceError):
-        return error_response(request, exc.status_code, exc.code, exc.message)
+        response = error_response(request, exc.status_code, exc.code, exc.message)
+        if exc.status_code == 429:
+            response.headers["Retry-After"] = "60"
+        if exc.code == "SESSION_INVALID":
+            settings = request.app.state.settings
+            response.delete_cookie(
+                settings.session_cookie_name,
+                path="/",
+                secure=settings.session_cookie_secure,
+                httponly=True,
+                samesite="lax",
+            )
+        return response
 
     @app.exception_handler(HTTPException)
     async def http_error(request: Request, exc: HTTPException):
