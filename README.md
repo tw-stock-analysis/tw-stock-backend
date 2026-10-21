@@ -2,6 +2,21 @@
 
 使用 Python 3.12、FastAPI 與 uv。
 
+## 本機 Docker 開發環境
+
+前後端儲存庫放在同一層，在後端目錄執行：
+
+```bash
+python scripts/init_dev_env.py
+docker compose --env-file .env.development -f docker-compose.dev.yml build backend
+docker compose --env-file .env.development -f docker-compose.dev.yml build frontend
+docker compose --env-file .env.development -f docker-compose.dev.yml up -d --wait
+```
+
+開啟 http://localhost:3007。同一套 Compose 管理 Vite、FastAPI、PostgreSQL 三個容器，包含前後端熱更新與自動 migration。開發資料使用獨立的 `.env.development` 與 `tw-stock-dev_dev_postgres_data` 資料卷；既有 Nginx 部署仍使用 `docker-compose.yml`。
+
+已設定適合 8GB 電腦先試用的容器記憶體上限，並依序建置以降低同時負載。實際用量仍取決於其他程式與 Docker Desktop 虛擬機。啟停、資料庫連線、測試帳號、migration 及熱更新排查見 [本機開發指南](docs/local-development.md)。
+
 ## 安裝
 
 在 backend 資料夾執行：
