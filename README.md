@@ -16,6 +16,11 @@ docker compose --env-file .env.development -f docker-compose.dev.yml up -d --wai
 開啟 http://localhost:3007。同一套 Compose 管理 Vite、FastAPI、PostgreSQL 三個容器，包含前後端熱更新與自動 migration。開發資料使用獨立的 `.env.development` 與 `tw-stock-dev_dev_postgres_data` 資料卷；既有 Nginx 部署仍使用 `docker-compose.yml`。
 
 已設定適合 8GB 電腦先試用的容器記憶體上限，並依序建置以降低同時負載。實際用量仍取決於其他程式與 Docker Desktop 虛擬機。啟停、資料庫連線、測試帳號、migration 及熱更新排查見 [本機開發指南](docs/local-development.md)。
+## GitHub Actions CI
+
+[Backend CI](.github/workflows/ci.yml) 在對 develop／master 的 PR，以及 develop／master／ci/** 分支的 push 時執行。先以 Python 3.12、鎖定的 uv 版本執行 Ruff、mypy、migration 檢查及 PostgreSQL 整合測試；通過後建置標準 Dockerfile，實際啟動映像驗證正式環境設定、migration 與 readiness。
+
+所有測試資料庫皆在 GitHub Runner 建立並於工作結束後丟棄，不連到開發或正式資料庫。CI 的 TWSE 測試使用受控回應；真實來源驗證保留獨立手動執行。觸發規則、範圍及失敗排查見 [CI 說明](docs/ci.md)。
 
 ## 安裝
 
@@ -32,7 +37,7 @@ test -f .env || cp .env.example .env
 
 ```bash
 source .venv/bin/activate
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload  
 ```
 
 若終端機已啟用 `.venv`，直接執行第二行即可。
