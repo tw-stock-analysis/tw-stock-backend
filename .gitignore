@@ -13,7 +13,11 @@ htmlcov/
 .env.*
 !.env.example
 !.env.development.example
+!.env.production.example
 *.log
 *.dump
+backups/
+deploy/tls/
+.deploy.lock
 .DS_Store
 Thumbs.db
