@@ -4,6 +4,7 @@ from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_session
+from app.services.research import ResearchService
 from app.services.stocks import StockService
 from app.services.twse import TwseService
 
@@ -22,3 +23,10 @@ def get_stock_service(twse: TwseServiceDependency) -> StockService:
 
 
 StockServiceDependency = Annotated[StockService, Depends(get_stock_service)]
+
+
+def get_research_service(twse: TwseServiceDependency) -> ResearchService:
+    return ResearchService(twse)
+
+
+ResearchServiceDependency = Annotated[ResearchService, Depends(get_research_service)]
