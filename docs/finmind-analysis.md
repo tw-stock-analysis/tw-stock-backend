@@ -11,11 +11,13 @@
 只讀驗證，不開資料庫連線、不寫行情檔案：
 
 ```bash
-uv run python -m app.services.finmind_check --code 2330
-uv run python -m app.services.finmind_check --code 0050 --start-date 2026-07-01 --end-date 2026-07-31
+UV_CACHE_DIR=/tmp/twstock-uv uv run python -m app.services.finmind_check --code 2330
+UV_CACHE_DIR=/tmp/twstock-uv uv run python -m app.services.finmind_check --code 0050 --start-date 2026-07-01 --end-date 2026-07-31
 ```
 
 輸出只有區塊狀態、筆數、時間與錯誤代碼。三區塊成功（包含合法空資料）才回 exit 0。
+
+`UV_CACHE_DIR` 僅指定 uv 的套件下載／建置快取，與行情資料無關。受限執行沙箱須開啟該次指令的網路權限；保留環境的 HTTPS proxy 與 TLS 驗證。網域列在設定中不代表連線已可用，應以上述實際請求確認。
 
 ## 契約與資料流程
 
@@ -52,6 +54,10 @@ uv run python -m app.services.finmind_check --code 0050 --start-date 2026-07-01 
 
 個股摘要提供歷史研究連結。進頁、送出日期或手動重查只發一個站內請求；日期保留於 URL，瀏覽器不直接連 FinMind。提供日 K／成交量／均線、月營收與法人圖表，各有精確明細、來源及台北取得時間。切換法人分類只改本次視圖；更新中隱藏舊圖，失敗不沿用舊值。未新增 FinMind 原始資料下載／匯出。
 
-自動化測試使用合成資料，不作產品行情。此輪執行環境仍回報未允許 FinMind，實際 HTTPS 請求遭代理 403，且未注入會員 Token；真實驗證待網路規則生效後執行上述指令。測試通過不等於真實來源已驗證。
+自動化測試使用合成資料，不作產品行情。2026-10-24（台北）已透過既有 HTTPS proxy 完成匿名真實來源驗證，未設定會員 Token。指定的 `2330` 預設指令三區塊均成功，顯示日線 123 筆、營收 35 筆、法人 123 筆；`0050` 與 `00981A` 的 2026 年 7 月日線／法人各 22 筆，ETF 營收為合法空陣列。筆數只代表本次觀測，之後查詢可能不同。
+
+真實 FastAPI 路由另驗證重查均重新依序呼叫 TWSE 與三個 FinMind 資料集、週末空資料、`0050` 分割期間、未知代碼與無效參數。來源最大同時請求數為 1；此組驗證未建立資料庫 engine，資料庫 session dependency 也設為呼叫即失敗。回應均為 `no-store`，紀錄只保存狀態、筆數及時間等驗證資訊，不保存行情列。詳見 [驗證紀錄](finmind-verification.json)。
+
+前端以 Chromium 經本機 Vite proxy 與 FastAPI 連到真實來源，桌面驗證三圖、手動重查、法人本機切換、週末與 ETF 空營收；390px 手機驗證 `00981A`、精確明細、無水平溢出及無效日期後移除舊圖。瀏覽器沒有直接請求 FinMind，沒有 JavaScript 錯誤。此次未發現須修改解析或圖表程式的問題；已更新過期的網路封鎖與待驗證說明。會員 Token、真實額度耗盡及正式部署拓樸不在本次真實驗證範圍；來源權限與額度錯誤流程由合成測試覆蓋。
 
 正式公開圖表、API、匯出及商業使用的權限應依用途確認，整合不代表取得再散布或公開即時展示授權：[方案](https://finmind.github.io/Pricing/)、[資料授權](https://finmind.github.io/Disclaimer/)。

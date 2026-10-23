@@ -1,5 +1,5 @@
 {
-  "recorded_at": "2026-10-23T16:15:22.770755+00:00",
+  "recorded_at": "2026-10-23T16:28:35.424657+00:00",
   "scope": "FinMind daily history, MA20/60, monthly revenue, institutional trades; no market persistence",
   "backend": {
     "passed": 345,
@@ -7,7 +7,8 @@
     "lint": "passed",
     "mypy": "passed",
     "new_analysis_tests": 32,
-    "fixtures": "synthetic"
+    "fixtures": "synthetic",
+    "skipped_reason": "Opt-in PostgreSQL, migration and external integration suites were not enabled; no market database used for live verification."
   },
   "frontend": {
     "passed": 154,
@@ -15,11 +16,304 @@
     "fixtures": "synthetic"
   },
   "live_finmind": {
-    "status": "blocked",
-    "reason": "Active managed environment allowlist lacks api.finmindtrade.com; HTTPS proxy tunnel returned 403",
-    "verified_real_finmind_datasets": 0
+    "verified_at": "2026-10-23T16:27:41.327291+00:00",
+    "status": "passed",
+    "topology": "FastAPI ASGI routes -> real TWSE identity -> real FinMind; shared source HTTP client; no lifespan or database engine",
+    "authentication": "anonymous",
+    "max_concurrent_source_http_requests": 1,
+    "database_session_calls": 0,
+    "contains_market_records": false,
+    "cases": [
+      {
+        "case": "2330_july",
+        "code": "2330",
+        "query": "start_date=2026-07-01&end_date=2026-07-31",
+        "http_status": 200,
+        "cache_control": "no-store",
+        "source_requests": [
+          "TWSE",
+          "TaiwanStockPrice",
+          "TaiwanStockMonthRevenue",
+          "TaiwanStockInstitutionalInvestorsBuySell"
+        ],
+        "complete": true,
+        "sections": {
+          "history": {
+            "status": "ok",
+            "display_rows": 22,
+            "source_rows": 138,
+            "query_start": "2026-01-02",
+            "query_end": "2026-07-31",
+            "retrieved_at": "2026-10-23T16:27:33.643785Z"
+          },
+          "revenue": {
+            "status": "ok",
+            "display_rows": 35,
+            "source_rows": 49,
+            "query_start": "2022-07-01",
+            "query_end": "2026-07-31",
+            "retrieved_at": "2026-10-23T16:27:34.055224Z"
+          },
+          "institutions": {
+            "status": "ok",
+            "display_rows": 22,
+            "source_rows": 410,
+            "query_start": "2026-04-02",
+            "query_end": "2026-07-31",
+            "retrieved_at": "2026-10-23T16:27:34.342546Z"
+          }
+        }
+      },
+      {
+        "case": "2330_fresh_repeat",
+        "code": "2330",
+        "query": "start_date=2026-07-01&end_date=2026-07-31",
+        "http_status": 200,
+        "cache_control": "no-store",
+        "source_requests": [
+          "TWSE",
+          "TaiwanStockPrice",
+          "TaiwanStockMonthRevenue",
+          "TaiwanStockInstitutionalInvestorsBuySell"
+        ],
+        "complete": true,
+        "sections": {
+          "history": {
+            "status": "ok",
+            "display_rows": 22,
+            "source_rows": 138,
+            "query_start": "2026-01-02",
+            "query_end": "2026-07-31",
+            "retrieved_at": "2026-10-23T16:27:35.781265Z"
+          },
+          "revenue": {
+            "status": "ok",
+            "display_rows": 35,
+            "source_rows": 49,
+            "query_start": "2022-07-01",
+            "query_end": "2026-07-31",
+            "retrieved_at": "2026-10-23T16:27:36.049215Z"
+          },
+          "institutions": {
+            "status": "ok",
+            "display_rows": 22,
+            "source_rows": 410,
+            "query_start": "2026-04-02",
+            "query_end": "2026-07-31",
+            "retrieved_at": "2026-10-23T16:27:36.341147Z"
+          }
+        }
+      },
+      {
+        "case": "0050_split_period",
+        "code": "0050",
+        "query": "start_date=2025-06-01&end_date=2025-06-30",
+        "http_status": 200,
+        "cache_control": "no-store",
+        "source_requests": [
+          "TWSE",
+          "TaiwanStockPrice",
+          "TaiwanStockMonthRevenue",
+          "TaiwanStockInstitutionalInvestorsBuySell"
+        ],
+        "complete": true,
+        "sections": {
+          "history": {
+            "status": "ok",
+            "display_rows": 16,
+            "source_rows": 132,
+            "query_start": "2024-12-03",
+            "query_end": "2025-06-30",
+            "retrieved_at": "2026-10-23T16:27:37.443638Z"
+          },
+          "revenue": {
+            "status": "ok",
+            "display_rows": 0,
+            "source_rows": 0,
+            "query_start": "2021-06-01",
+            "query_end": "2025-06-30",
+            "retrieved_at": "2026-10-23T16:27:37.717388Z"
+          },
+          "institutions": {
+            "status": "ok",
+            "display_rows": 16,
+            "source_rows": 385,
+            "query_start": "2025-03-03",
+            "query_end": "2025-06-30",
+            "retrieved_at": "2026-10-23T16:27:38.010864Z"
+          }
+        }
+      },
+      {
+        "case": "00981A_alphanumeric",
+        "code": "00981A",
+        "query": "start_date=2026-07-01&end_date=2026-07-31",
+        "http_status": 200,
+        "cache_control": "no-store",
+        "source_requests": [
+          "TWSE",
+          "TaiwanStockPrice",
+          "TaiwanStockMonthRevenue",
+          "TaiwanStockInstitutionalInvestorsBuySell"
+        ],
+        "complete": true,
+        "sections": {
+          "history": {
+            "status": "ok",
+            "display_rows": 22,
+            "source_rows": 138,
+            "query_start": "2026-01-02",
+            "query_end": "2026-07-31",
+            "retrieved_at": "2026-10-23T16:27:39.116818Z"
+          },
+          "revenue": {
+            "status": "ok",
+            "display_rows": 0,
+            "source_rows": 0,
+            "query_start": "2022-07-01",
+            "query_end": "2026-07-31",
+            "retrieved_at": "2026-10-23T16:27:39.407121Z"
+          },
+          "institutions": {
+            "status": "ok",
+            "display_rows": 22,
+            "source_rows": 410,
+            "query_start": "2026-04-02",
+            "query_end": "2026-07-31",
+            "retrieved_at": "2026-10-23T16:27:39.724459Z"
+          }
+        }
+      },
+      {
+        "case": "2330_weekend",
+        "code": "2330",
+        "query": "start_date=2026-07-04&end_date=2026-07-05",
+        "http_status": 200,
+        "cache_control": "no-store",
+        "source_requests": [
+          "TWSE",
+          "TaiwanStockPrice",
+          "TaiwanStockMonthRevenue",
+          "TaiwanStockInstitutionalInvestorsBuySell"
+        ],
+        "complete": true,
+        "sections": {
+          "history": {
+            "status": "ok",
+            "display_rows": 0,
+            "source_rows": 118,
+            "query_start": "2026-01-05",
+            "query_end": "2026-07-05",
+            "retrieved_at": "2026-10-23T16:27:40.501018Z"
+          },
+          "revenue": {
+            "status": "ok",
+            "display_rows": 35,
+            "source_rows": 49,
+            "query_start": "2022-07-01",
+            "query_end": "2026-07-05",
+            "retrieved_at": "2026-10-23T16:27:40.790247Z"
+          },
+          "institutions": {
+            "status": "ok",
+            "display_rows": 0,
+            "source_rows": 310,
+            "query_start": "2026-04-05",
+            "query_end": "2026-07-05",
+            "retrieved_at": "2026-10-23T16:27:41.075318Z"
+          }
+        }
+      },
+      {
+        "case": "unknown_code",
+        "code": "999999",
+        "query": "",
+        "http_status": 404,
+        "cache_control": "no-store",
+        "source_requests": [
+          "TWSE"
+        ],
+        "error_code": "STOCK_NOT_FOUND"
+      },
+      {
+        "case": "invalid_code",
+        "code": "bad-code",
+        "query": "",
+        "http_status": 422,
+        "cache_control": "no-store",
+        "source_requests": [],
+        "error_code": "VALIDATION_ERROR"
+      },
+      {
+        "case": "invalid_range",
+        "code": "2330",
+        "query": "start_date=2026-08-01&end_date=2026-07-31",
+        "http_status": 422,
+        "cache_control": "no-store",
+        "source_requests": [],
+        "error_code": "VALIDATION_ERROR"
+      },
+      {
+        "case": "unknown_parameter",
+        "code": "2330",
+        "query": "dataset=TaiwanStockPrice",
+        "http_status": 422,
+        "cache_control": "no-store",
+        "source_requests": [],
+        "error_code": "VALIDATION_ERROR"
+      }
+    ],
+    "verified_real_finmind_datasets": 3,
+    "backend_base_commit": "007dc46",
+    "network": {
+      "configured_allowed_host": "api.finmindtrade.com",
+      "observed_policy_state": "unknown",
+      "https_request": "passed through inherited proxy with TLS verification enabled",
+      "execution_requirement": "Network permission enabled for the command; default isolated shell could not connect to proxy:8080."
+    },
+    "cli_checks": [
+      {
+        "command": "UV_CACHE_DIR=/tmp/twstock-uv uv run python -m app.services.finmind_check --code 2330",
+        "exit_code": 0,
+        "complete": true,
+        "display_rows": {
+          "history": 123,
+          "revenue": 35,
+          "institutions": 123
+        },
+        "retrieved_at_start": "2026-10-23T16:23:40.293955+00:00",
+        "retrieved_at_end": "2026-10-23T16:23:40.913985+00:00"
+      },
+      {
+        "command": "UV_CACHE_DIR=/tmp/twstock-uv uv run python -m app.services.finmind_check --code 0050 --start-date 2026-07-01 --end-date 2026-07-31",
+        "exit_code": 0,
+        "complete": true,
+        "display_rows": {
+          "history": 22,
+          "revenue": 0,
+          "institutions": 22
+        }
+      },
+      {
+        "command": "UV_CACHE_DIR=/tmp/twstock-uv uv run python -m app.services.finmind_check --code 00981A --start-date 2026-07-01 --end-date 2026-07-31",
+        "exit_code": 0,
+        "complete": true,
+        "display_rows": {
+          "history": 22,
+          "revenue": 0,
+          "institutions": 22
+        }
+      }
+    ],
+    "not_live_verified": [
+      "member token authentication",
+      "real quota exhaustion",
+      "production deployment topology"
+    ]
   },
   "market_database_changes": false,
   "market_cache": false,
-  "automatic_retry": false
+  "automatic_retry": false,
+  "findings": "No parser or chart defects observed in the verified cases. Corrected stale blocked-network and pending-verification documentation.",
+  "contains_market_records": false
 }
