@@ -59,7 +59,7 @@ jobs:
       - name: Install locked dependencies
         run: uv sync --locked
       - name: Lint
-        run: uv run --frozen ruff check app tests .github/scripts
+        run: uv run --frozen ruff check app tests scripts .github/scripts
       - name: Type-check
         run: uv run --frozen mypy
       - name: Apply and check migrations on disposable PostgreSQL
@@ -89,7 +89,130 @@ jobs:
           push: false
           load: true
           tags: tw-stock-backend:ci
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
       - name: Verify production settings, migrations and readiness
         run: python3 .github/scripts/smoke_backend.py tw-stock-backend:ci
+      - name: Save the verified runtime image
+        run: docker save tw-stock-backend:ci --output "$RUNNER_TEMP/image.tar"
+      - name: Upload verified image for deployment checks and publisher
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: verified-runtime-image-${{ github.sha }}
+          path: ${{ runner.temp }}/image.tar
+          compression-level: 0
+          retention-days: 1
+
+  deployment:
+    name: Verify production Compose and HTTPS auth
+    needs: docker
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out deployment configuration
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Check out the pinned frontend used by the deployment test
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: tw-stock-analysis/tw-stock-frontend
+          ref: 9a6bcae89472ee0c64f174b6f5e61e67a53ec247
+          path: .ci-frontend
+          persist-credentials: false
+      - name: Download the verified backend image
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: verified-runtime-image-${{ github.sha }}
+          path: ${{ runner.temp }}/verified-image
+      - name: Load backend image
+        run: docker load --input "$RUNNER_TEMP/verified-image/image.tar"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - name: Build pinned frontend for the deployment check
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .ci-frontend
+          push: false
+          load: true
+          tags: tw-stock-frontend:deployment-check
+          cache-from: type=gha,scope=deployment-frontend
+          cache-to: type=gha,scope=deployment-frontend,mode=max
+      - name: Verify HTTPS, migrations and Secure Cookie authentication
+        run: python3 .github/scripts/smoke_deployment.py
+
+  publish:
+    name: Publish verified image to GHCR
+    needs: [docker, deployment]
+    if: >-
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/develop' ||
+       github.ref == 'refs/heads/master' ||
+       github.ref == 'refs/heads/ci/ghcr-release')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Download the image that passed smoke tests
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: verified-runtime-image-${{ github.sha }}
+          path: ${{ runner.temp }}/verified-image
+      - name: Load and verify source revision
+        id: verified
+        shell: bash
+        run: |
+          docker load --input "$RUNNER_TEMP/verified-image/image.tar"
+          revision=$(docker image inspect --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' tw-stock-backend:ci)
+          test "$revision" = "$GITHUB_SHA"
+          image_id=$(docker image inspect --format '{{.Id}}' tw-stock-backend:ci)
+          echo "image_id=$image_id" >> "$GITHUB_OUTPUT"
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Push and verify the published digest
+        env:
+          VERIFIED_IMAGE_ID: ${{ steps.verified.outputs.image_id }}
+        shell: bash
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          run_tag="run-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          docker tag tw-stock-backend:ci "$image:$run_tag"
+          docker push "$image:$run_tag"
+          digest=$(docker buildx imagetools inspect "$image:$run_tag" --format '{{json .Manifest}}' | jq -r '.digest')
+          [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]
+          reference="$image@$digest"
+          docker pull "$reference"
+          pulled_id=$(docker image inspect --format '{{.Id}}' "$reference")
+          test "$pulled_id" = "$VERIFIED_IMAGE_ID"
+          tags=("sha-$GITHUB_SHA")
+          case "$GITHUB_REF" in
+            refs/heads/develop) tags+=(develop) ;;
+            refs/heads/master) tags+=(master) ;;
+          esac
+          for tag in "${tags[@]}"; do
+            docker tag tw-stock-backend:ci "$image:$tag"
+            docker push "$image:$tag"
+          done
+          jq -n --arg image "$image" --arg digest "$digest" --arg reference "$reference" \
+            --arg source_commit "$GITHUB_SHA" --arg run_tag "$run_tag" \
+            '{image:$image,digest:$digest,reference:$reference,source_commit:$source_commit,run_tag:$run_tag,platform:"linux/amd64"}' \
+            > image-release.json
+          printf '### Verified GHCR image\n\n%s\n\nSource: %s\n\nDeploy using this digest reference.\n' \
+            "$reference" "$GITHUB_SHA" >> "$GITHUB_STEP_SUMMARY"
+      - name: Save the exact deployment reference
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: image-release-${{ github.sha }}
+          path: image-release.json
+          retention-days: 90

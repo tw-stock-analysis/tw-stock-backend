@@ -9,7 +9,7 @@
 | workflow_dispatch | 手動執行；工作流程合併至預設分支後可由 Actions 頁操作 |
 | 其他功能分支的一般 push | 不觸發，建立 PR 後才執行 |
 
-同一個 ref 的新執行會取消尚未完成的舊執行；PR 與 push 使用各自的 ref。Workflow 的 GitHub Token 只有 contents: read，checkout 不保留 Git 憑證，Actions 固定完整 commit SHA。
+同一個 ref 的新執行會取消尚未完成的舊執行；PR 與 push 使用各自的 ref。測試／Docker／部署驗證 job 的 Token 只有 contents: read；獨立 publish job 才取得 packages: write，且只接受 develop／master／ci/ghcr-release 的 push。Checkout 不保留 Git 憑證，Actions 固定完整 commit SHA。
 
 ## Python checks and PostgreSQL tests
 
@@ -23,7 +23,7 @@ CI 不使用儲存庫外的 .env，也不需要開發或正式環境 Secrets。S
 
 ## Build and smoke-test runtime image
 
-Python 檢查與測試通過後，使用既有多階段 Dockerfile 建置正式執行映像。映像只載入當次 Runner，不登入或推送 Registry。BuildKit 快取用於相依層，不保存行情或應用資料庫內容。
+Python 檢查與測試通過後，使用既有多階段 Dockerfile 建置正式執行映像，先載入 Runner 驗證。BuildKit 快取用於相依層，不保存行情或應用資料庫內容。
 
 [smoke_backend.py](../.github/scripts/smoke_backend.py) 會：
 
@@ -34,12 +34,20 @@ Python 檢查與測試通過後，使用既有多階段 Dockerfile 建置正式�
 5. 驗證 ready 回 200、匿名 /me 回 401、未知 API 與正式環境 Swagger 回 404，以及公開資料集目錄可取得。
 6. 在結束時清除自己建立的容器、資料卷與網路；失敗時輸出對應容器日誌。
 
-此檢查不需要前端儲存庫，也不呼叫真實 TWSE API。
+此單一映像檢查不需要前端儲存庫，也不呼叫真實 TWSE API。
+
+## 正式 Compose 驗證與 GHCR
+
+deployment job 下載已通過單一映像檢查的後端 artifact，並搭配固定 frontend commit 建置 Nginx，實際測試 docker-compose.deploy.yml。測試使用獨立專案、資料卷與憑證，驗證 HTTPS、HTTP 轉址、migration、Secure Cookie 登入／登出；不使用正式主機或真實行情。
+
+publish job 等待 Docker 與 deployment 都成功，再下載同一份後端映像、核對 source revision，使用 GITHUB_TOKEN 發布 GHCR；不重新建置。發布後用 digest 拉回比對 image ID，將完整 reference 寫入 Actions 摘要與 image-release artifact。PR 不發布；ci/ghcr-release 只發布候選版本，不更新 develop／master 標籤。
+
+標籤、版本配對、package 權限與主機部署方式見 [部署指南](deployment.md)。
 
 ## 結果與後續發布
 
-在儲存庫 Actions 頁或 commit／PR 的 Checks 查看兩個 job。Python 問題先看 test job；映像、環境設定或啟動問題看 docker job 與容器日誌。
+在儲存庫 Actions 頁或 commit／PR 的 Checks 查看 test、docker、deployment 與 publish job。先查看失敗的 job 步驟與對應容器日誌。
 
 目前 CI 提供執行結果；若要禁止檢查失敗的 PR 合併，需要另外在 GitHub ruleset／branch protection 設定必要檢查。此工作流程不設定分支規則。
 
-本輪完成自動測試與 Docker 建置檢查。GHCR 發布、前後端發布版本配對、SSH、正式資料庫與正式主機部署留待下一階段。CI 不執行合併或部署，不需要正式帳密。
+本輪加入 GHCR 發布與可套用的正式部署設定。正式主機尚未建立，SSH 部署、實際網域與正式憑證留待主機選定後設定；CI 不執行合併或正式部署。

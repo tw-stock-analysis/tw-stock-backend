@@ -15,3 +15,6 @@ tests
 docs
 *.log
 *.dump
+backups
+deploy/tls
+.deploy.lock

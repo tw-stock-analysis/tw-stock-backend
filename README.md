@@ -20,7 +20,13 @@ docker compose --env-file .env.development -f docker-compose.dev.yml up -d --wai
 
 [Backend CI](.github/workflows/ci.yml) 在對 develop／master 的 PR，以及 develop／master／ci/** 分支的 push 時執行。先以 Python 3.12、鎖定的 uv 版本執行 Ruff、mypy、migration 檢查及 PostgreSQL 整合測試；通過後建置標準 Dockerfile，實際啟動映像驗證正式環境設定、migration 與 readiness。
 
-所有測試資料庫皆在 GitHub Runner 建立並於工作結束後丟棄，不連到開發或正式資料庫。CI 的 TWSE 測試使用受控回應；真實來源驗證保留獨立手動執行。觸發規則、範圍及失敗排查見 [CI 說明](docs/ci.md)。
+所有測試資料庫皆在 GitHub Runner 建立並於工作結束後丟棄，不連到開發或正式資料庫。CI 的 TWSE 測試使用受控回應；真實來源驗證保留獨立手動執行。部署 Compose 另以一次性 HTTPS 環境驗證登入與 Secure Cookie；通過後，develop／master 的 push 會將同一份映像發布到 GHCR。ci/ghcr-release 只發布候選版本，供合併前驗證。觸發規則、範圍及失敗排查見 [CI 說明](docs/ci.md)。
+
+## GHCR 與正式部署設定
+
+`docker-compose.deploy.yml` 使用前後端各自固定的 GHCR digest，在準備好的主機提供 Nginx HTTPS 入口與獨立正式 PostgreSQL。`scripts/deploy.py` 先驗證映像、來源、資料庫隔離與憑證，再拉取映像、備份資料庫並依序執行 migration 與啟動。
+
+目前尚未建立正式主機；主機、網域與憑證準備好後，依 [部署指南](docs/deployment.md) 設定 `.env.production` 並套用。本機開發繼續使用既有開發 Compose 與資料庫。
 
 ## 安裝
 
