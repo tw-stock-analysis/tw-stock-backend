@@ -1,0 +1,161 @@
+{
+  "verified_at": "2026-10-23T16:43:32.076108+00:00",
+  "scope": "Phase 1: RSI14, MACD 12/26/9, Bollinger 20/2, year-to-date and trailing-12-month revenue; no added source requests",
+  "backend_parent_commit": "98cd572",
+  "tests": {
+    "passed": 356,
+    "skipped": 184,
+    "indicator_and_aggregate_tests": 11,
+    "ruff": "passed",
+    "mypy_source_files": 56,
+    "skip_reason": "Opt-in database, migration and external integration suites not enabled; live market checks were run separately without a database engine."
+  },
+  "cli_default_2330": {
+    "exit_code": 0,
+    "complete": true,
+    "display_rows": {
+      "history": 123,
+      "revenue": 35,
+      "institutions": 123
+    }
+  },
+  "live_api": {
+    "verified_at": "2026-10-23T16:42:56.116441+00:00",
+    "status": "passed",
+    "topology": "FastAPI ASGI routes -> real TWSE identity -> real FinMind; shared source HTTP client; no lifespan or database engine",
+    "authentication": "anonymous",
+    "max_concurrent_source_http_requests": 1,
+    "database_session_calls": 0,
+    "successful_source_order": [
+      "TWSE",
+      "TaiwanStockPrice",
+      "TaiwanStockMonthRevenue",
+      "TaiwanStockInstitutionalInvestorsBuySell"
+    ],
+    "fresh_repeat_source_timestamps_differ": true,
+    "cache_control": "no-store",
+    "cases": [
+      {
+        "case": "2330_july",
+        "code": "2330",
+        "query": "start_date=2026-07-01&end_date=2026-07-31",
+        "http_status": 200,
+        "source_requests": 4,
+        "complete": true,
+        "populated_indicators": true,
+        "complete_latest_revenue_aggregates": true,
+        "display_rows": {
+          "history": 22,
+          "revenue": 35,
+          "institutions": 22
+        }
+      },
+      {
+        "case": "2330_fresh_repeat",
+        "code": "2330",
+        "query": "start_date=2026-07-01&end_date=2026-07-31",
+        "http_status": 200,
+        "source_requests": 4,
+        "complete": true,
+        "populated_indicators": true,
+        "complete_latest_revenue_aggregates": true,
+        "display_rows": {
+          "history": 22,
+          "revenue": 35,
+          "institutions": 22
+        }
+      },
+      {
+        "case": "0050_split_period",
+        "code": "0050",
+        "query": "start_date=2025-06-01&end_date=2025-06-30",
+        "http_status": 200,
+        "source_requests": 4,
+        "complete": true,
+        "display_rows": {
+          "history": 16,
+          "revenue": 0,
+          "institutions": 16
+        }
+      },
+      {
+        "case": "00981A_alphanumeric",
+        "code": "00981A",
+        "query": "start_date=2026-07-01&end_date=2026-07-31",
+        "http_status": 200,
+        "source_requests": 4,
+        "complete": true,
+        "display_rows": {
+          "history": 22,
+          "revenue": 0,
+          "institutions": 22
+        }
+      },
+      {
+        "case": "2330_weekend",
+        "code": "2330",
+        "query": "start_date=2026-07-04&end_date=2026-07-05",
+        "http_status": 200,
+        "source_requests": 4,
+        "complete": true,
+        "display_rows": {
+          "history": 0,
+          "revenue": 35,
+          "institutions": 0
+        }
+      },
+      {
+        "case": "2317_no_price",
+        "code": "2317",
+        "query": "start_date=2025-07-28&end_date=2025-07-31",
+        "http_status": 200,
+        "source_requests": 4,
+        "complete": true,
+        "populated_indicators": true,
+        "complete_latest_revenue_aggregates": true,
+        "missing_price_rows": 1,
+        "display_rows": {
+          "history": 4,
+          "revenue": 35,
+          "institutions": 3
+        }
+      },
+      {
+        "case": "unknown_code",
+        "code": "999999",
+        "query": "",
+        "http_status": 404,
+        "source_requests": 1,
+        "error_code": "STOCK_NOT_FOUND"
+      },
+      {
+        "case": "invalid_code",
+        "code": "bad-code",
+        "query": "",
+        "http_status": 422,
+        "source_requests": 0,
+        "error_code": "VALIDATION_ERROR"
+      },
+      {
+        "case": "invalid_range",
+        "code": "2330",
+        "query": "start_date=2026-08-01&end_date=2026-07-31",
+        "http_status": 422,
+        "source_requests": 0,
+        "error_code": "VALIDATION_ERROR"
+      },
+      {
+        "case": "unknown_parameter",
+        "code": "2330",
+        "query": "dataset=TaiwanStockPrice",
+        "http_status": 422,
+        "source_requests": 0,
+        "error_code": "VALIDATION_ERROR"
+      }
+    ]
+  },
+  "market_database_changes": false,
+  "market_cache": false,
+  "automatic_retry": false,
+  "contains_market_records": false
+}

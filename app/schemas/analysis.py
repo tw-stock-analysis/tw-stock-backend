@@ -57,7 +57,19 @@ class AnalysisSection[T](APIModel):
     error: AnalysisError | None = None
 
 
-class HistoryPoint(APIModel):
+class TechnicalIndicators(APIModel):
+    ma20: str | None = None
+    ma60: str | None = None
+    rsi14: str | None = None
+    macd: str | None = None
+    macd_signal: str | None = None
+    macd_histogram: str | None = None
+    bollinger_middle: str | None = None
+    bollinger_upper: str | None = None
+    bollinger_lower: str | None = None
+
+
+class HistoryPoint(TechnicalIndicators):
     date: date
     open: str
     high: str
@@ -66,8 +78,7 @@ class HistoryPoint(APIModel):
     volume: str
     amount: str
     opening_reference: bool = False
-    ma20: str | None
-    ma60: str | None
+    price_available: bool = True
 
 
 class RevenuePoint(APIModel):
@@ -77,6 +88,10 @@ class RevenuePoint(APIModel):
     mom: str | None
     record_date: date
     recorded_at: date | None
+    ytd_revenue: str | None = None
+    ytd_yoy: str | None = None
+    trailing12_revenue: str | None = None
+    trailing12_yoy: str | None = None
 
 
 class InstitutionTrade(APIModel):

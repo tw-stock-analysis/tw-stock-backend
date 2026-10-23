@@ -83,6 +83,8 @@ curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
 
 新增 `GET /api/v1/stocks/{code}/analysis`，依序取得日線、月營收及法人資料，提供 MA20／MA60、營收成長率及法人累計。前端從個股摘要進入 `/stocks/:code/history`。後端選用 `FINMIND_API_TOKEN`，不增加 SDK、行情表或快取；日期、單位、部分失敗與只讀驗證指令見 [FinMind 契約](docs/finmind-analysis.md)。已於 2026-10-24（台北）完成匿名真實來源與前後端串接驗證，結果見 [驗證紀錄](docs/finmind-verification.json)。
 
+同一歷史研究回應另提供 RSI14、MACD（12／26／9）、布林通道，以及年初累計／近 12 個月營收與年增率。前端切換視圖不新增來源請求；無公告成交價不以零元計算指標，營收缺月不補零。定義與暖機規則見上述契約，實測見 [指標與累計營收驗證](docs/finmind-indicators-verification.json)。
+
 ## 帳號與自選股資料表（SQLAlchemy ORM）
 
 已建立 `app.users`、`app.auth_sessions`、`app.verification_tokens` 三張帳號表的 SQLAlchemy 2 ORM 模型及 Alembic migration，支援 Email 唯一性、一對多裝置 Session 與驗證 Token 欄位。後端登入、Cookie 驗證與裝置管理已接上；前端已接上登入／登出與裝置管理；公開註冊及寄信留待後續實作。TWSE 行情維持逐次請求、不入庫、不快取。

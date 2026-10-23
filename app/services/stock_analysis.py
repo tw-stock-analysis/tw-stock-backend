@@ -14,10 +14,12 @@ from app.schemas.analysis import (
     InstitutionTrade,
     RevenuePoint,
     StockAnalysisResponse,
+    TechnicalIndicators,
 )
 from app.services.errors import ServiceError
 from app.services.finmind import FinMindService, Row, invalid_data
 from app.services.stocks import StockService
+from app.services.technical_indicators import technical_indicators
 
 LABELS = {
     "Foreign_Investor": "外資（不含外資自營）",
@@ -88,44 +90,49 @@ def history_points(rows: list[Row], code: str, start: date, end: date) -> list[H
         if day in by_date:
             raise invalid_data()
         prices = [number(row, field) for field in ("open", "max", "min", "close")]
-        if prices[1] < prices[2] or not prices[2] <= prices[3] <= prices[1]:
+        if (
+            prices[1] < prices[2]
+            or not prices[2] <= prices[3] <= prices[1]
+            or (prices[3] == 0 and any(prices))
+        ):
             raise invalid_data()
         by_date[day] = (
             prices,
             number(row, "Trading_Volume", integer=True),
             number(row, "Trading_money"),
         )
-    closes: list[Decimal] = []
+    ordered = sorted(by_date.items())
+    available = [(day, values[0][3]) for day, values in ordered if values[0][3] > 0]
+    indicators = dict(
+        zip(
+            (day for day, _ in available),
+            technical_indicators([close for _, close in available]),
+            strict=True,
+        )
+    )
     points = []
-    with localcontext() as context:
-        context.prec = 64
-        for day, (prices, volume, amount) in sorted(by_date.items()):
-            closes.append(prices[3])
-            if day < start:
-                continue
-            averages = [
-                rounded(sum(closes[-size:], Decimal(0)) / size) if len(closes) >= size else None
-                for size in (20, 60)
-            ]
-            points.append(
-                HistoryPoint(
-                    date=day,
-                    open=display(prices[0]),
-                    high=display(prices[1]),
-                    low=display(prices[2]),
-                    close=display(prices[3]),
-                    volume=display(volume),
-                    amount=display(amount),
-                    opening_reference=not prices[2] <= prices[0] <= prices[1],
-                    ma20=averages[0],
-                    ma60=averages[1],
-                )
+    for day, (prices, volume, amount) in ordered:
+        if day < start:
+            continue
+        points.append(
+            HistoryPoint(
+                date=day,
+                open=display(prices[0]),
+                high=display(prices[1]),
+                low=display(prices[2]),
+                close=display(prices[3]),
+                volume=display(volume),
+                amount=display(amount),
+                opening_reference=not prices[2] <= prices[0] <= prices[1],
+                price_available=prices[3] > 0,
+                **indicators.get(day, TechnicalIndicators()).model_dump(),
             )
+        )
     return points
 
 
 def revenue_points(rows: list[Row], code: str, end: date) -> list[RevenuePoint]:
-    start, visible = month_shift(end, -48), month_shift(end, -35)
+    start, visible = month_shift(end, -60), month_shift(end, -35)
     by_month: dict[date, tuple[Row, Decimal]] = {}
     for row in rows:
         day = validate_identity(row, code, start, end)
@@ -143,6 +150,17 @@ def revenue_points(rows: list[Row], code: str, end: date) -> list[RevenuePoint]:
     result = []
     with localcontext() as context:
         context.prec = 64
+
+        def complete_sum(periods: list[date]) -> Decimal | None:
+            if any(period not in by_month for period in periods):
+                return None
+            return sum((by_month[period][1] for period in periods), Decimal(0))
+
+        def growth(current: Decimal | None, previous: Decimal | None) -> str | None:
+            if current is None or previous is None or previous <= 0:
+                return None
+            return rounded((current - previous) / previous * 100)
+
         for period, (row, value) in sorted(by_month.items()):
             if period < visible:
                 continue
@@ -154,6 +172,10 @@ def revenue_points(rows: list[Row], code: str, end: date) -> list[RevenuePoint]:
                     if previous and previous[1] > 0
                     else None
                 )
+            year_months = [date(period.year, month, 1) for month in range(1, period.month + 1)]
+            rolling_months = [month_shift(period, offset) for offset in range(-11, 1)]
+            ytd = complete_sum(year_months)
+            trailing12 = complete_sum(rolling_months)
             result.append(
                 RevenuePoint(
                     month=period.strftime("%Y-%m"),
@@ -162,6 +184,12 @@ def revenue_points(rows: list[Row], code: str, end: date) -> list[RevenuePoint]:
                     mom=changes[1],
                     record_date=record_date(row),
                     recorded_at=record_date(row, "create_time") if row.get("create_time") else None,
+                    ytd_revenue=display(ytd) if ytd is not None else None,
+                    ytd_yoy=growth(ytd, complete_sum([month_shift(m, -12) for m in year_months])),
+                    trailing12_revenue=display(trailing12) if trailing12 is not None else None,
+                    trailing12_yoy=growth(
+                        trailing12, complete_sum([month_shift(m, -12) for m in rolling_months])
+                    ),
                 )
             )
     return result
@@ -248,7 +276,7 @@ class StockAnalysisService:
             ]
         ] = [
             ("TaiwanStockPrice", max(date(1994, 10, 1), start - timedelta(days=180)), history),
-            ("TaiwanStockMonthRevenue", month_shift(end, -48), revenue),
+            ("TaiwanStockMonthRevenue", month_shift(end, -60), revenue),
             (
                 "TaiwanStockInstitutionalInvestorsBuySell",
                 max(date(1994, 10, 1), start - timedelta(days=90)),
@@ -266,7 +294,14 @@ class StockAnalysisService:
                 if dataset == "TaiwanStockPrice":
                     history.data = history_points(rows, code, start, end)
                     meta.price_basis = "unadjusted"
-                    meta.units = {"price": "TWD", "volume": "share", "amount": "TWD"}
+                    meta.units = {
+                        "price": "TWD",
+                        "volume": "share",
+                        "amount": "TWD",
+                        "macd": "TWD",
+                        "bollinger": "TWD",
+                        "rsi14": "percent",
+                    }
                 elif dataset == "TaiwanStockMonthRevenue":
                     revenue.data = revenue_points(rows, code, end)
                     meta.units = {"revenue": "TWD", "growth": "percent"}
