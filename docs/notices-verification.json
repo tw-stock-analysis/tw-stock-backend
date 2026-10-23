@@ -1,0 +1,37 @@
+{
+  "verified_at": "2026-10-23T06:00:58.364407+00:00",
+  "topology": "Chromium -> Vite same-origin proxy -> FastAPI -> live TWSE",
+  "database_connection_attempts": 0,
+  "max_concurrent_upstream": 1,
+  "javascript_errors": [],
+  "horizontal_page_overflow": false,
+  "calendar": {
+    "date_filters": "passed",
+    "pagination": "passed",
+    "ics_parser": "icalendar 6.3.1",
+    "ics_events_in_download": 27,
+    "all_day_dates": "passed",
+    "exclusive_end_date": "passed",
+    "partial_source_download_blocked": "passed"
+  },
+  "risk_notices": {
+    "all_selected_sources_succeeded": true,
+    "attention_zero_marker_count": 0,
+    "notice_count": 6,
+    "exact_code_filter": "passed",
+    "explicit_stock_panel": "passed",
+    "failed_refresh_removes_previous_notices": "passed"
+  },
+  "mobile_routes": [
+    "/research/calendar?kind=market",
+    "/research/risks?kind=disposition"
+  ],
+  "source_ids": [
+    "ex-dividend",
+    "market-calendar",
+    "attention-securities",
+    "disposition-securities",
+    "suspended-securities"
+  ],
+  "retained_content": "Verification metadata only, no quotes, full notices or calendar file"
+}

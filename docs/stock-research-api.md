@@ -1,6 +1,6 @@
 # 上市證券搜尋與真實個股詳情
 
-四個端點在 `app/api/v1/endpoints/stocks.py` 以 `@router.get` 明確宣告，經 `StockService` 使用既有 TWSE adapter。沒有行情資料庫、資料匯入、行情快取、自動重試或其他供應商。本頁記錄這四個個股端點；加入後續[研究工具](research-tools.md)與認證後，目前共有 **55 個公開端點、5 個認證端點，合計 60 個 API 路由**。
+四個端點在 `app/api/v1/endpoints/stocks.py` 以 `@router.get` 明確宣告，經 `StockService` 使用既有 TWSE adapter。沒有行情資料庫、資料匯入、行情快取、自動重試或其他供應商。本頁記錄這四個個股端點；加入後續[研究工具](research-tools.md)與認證後，目前共有 **58 個公開端點、5 個認證端點，合計 63 個 API 路由**。
 
 | GET 端點 | 用途 | 每次取得的官方來源 |
 | --- | --- | --- |

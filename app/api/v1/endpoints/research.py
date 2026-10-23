@@ -2,7 +2,8 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, Response
 
-from app.api.deps import ResearchServiceDependency
+from app.api.deps import NoticeServiceDependency, ResearchServiceDependency
+from app.schemas.notices import CalendarQuery, CalendarResponse, RiskQuery, RiskResponse
 from app.schemas.research import (
     ComparisonQuery,
     ComparisonResponse,
@@ -48,3 +49,33 @@ async def compare(query: Annotated[ComparisonQuery, Query()], service: ResearchS
 )
 async def overview(query: Annotated[EmptyQuery, Query()], service: ResearchServiceDependency):
     return await service.overview()
+
+
+@router.get("/calendar", response_model=CalendarResponse, summary="除權息與開休市公告日期篩選")
+async def calendar(query: Annotated[CalendarQuery, Query()], service: NoticeServiceDependency):
+    return await service.calendar(query)
+
+
+@router.get(
+    "/calendar/export",
+    response_class=Response,
+    summary="重新取得完整日期事件並下載 ICS 日曆",
+    responses={200: {"content": {"text/calendar": {"schema": {"type": "string"}}}}},
+)
+async def calendar_export(
+    query: Annotated[CalendarQuery, Query()], service: NoticeServiceDependency
+):
+    content, skipped = await service.calendar_export(query)
+    return Response(
+        content,
+        media_type="text/calendar; charset=utf-8",
+        headers={
+            "Content-Disposition": 'attachment; filename="twse-calendar.ics"',
+            "X-Skipped-Undated": str(skipped),
+        },
+    )
+
+
+@router.get("/risks", response_model=RiskResponse, summary="逐次彙整官方注意、處置與暫停交易公告")
+async def risks(query: Annotated[RiskQuery, Query()], service: NoticeServiceDependency):
+    return await service.risks(query)

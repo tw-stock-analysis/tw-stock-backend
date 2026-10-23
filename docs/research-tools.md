@@ -8,8 +8,11 @@
 | `/api/v1/research/screener/export` | 完整篩選結果 CSV | 重新取得日成交一次 |
 | `/api/v1/research/compare?codes=0050,2330` | 2～4 檔成交及估值比較 | 日成交一次，再依序取得 `BWIBBU_ALL` 一次 |
 | `/api/v1/research/overview` | 最新有效交易日的漲跌分布及三份前 10 名排行 | 日成交一次 |
+| `/api/v1/research/calendar` | 除權息與開休市公告篩選 | 所選日曆來源各一次，依序執行 |
+| `/api/v1/research/calendar/export` | 完整日期事件 ICS | 重新取得所選日曆來源 |
+| `/api/v1/research/risks` | 注意、處置、暫停交易公告 | 所選公告來源各一次，依序執行 |
 
-端點明確宣告於 `app/api/v1/endpoints/research.py`，輸入與輸出位於 `app/schemas/research.py`，計算位於 `app/services/research.py`。目前共有 **55 個公開端點、5 個認證端點，合計 60 個 API 路由**，不計文件頁。
+端點明確宣告於 `app/api/v1/endpoints/research.py`，成交研究輸入輸出及計算位於 `app/schemas/research.py`／`app/services/research.py`；日曆與公告使用 `app/schemas/notices.py`／`app/services/notices.py`。目前共有 **58 個公開端點、5 個認證端點，合計 63 個 API 路由**，不計文件頁。日曆條件、ICS 與公告空標記、部分失敗行為見 [日曆與官方風險公告](calendar-and-risks.md)。
 
 ## 篩選與排序
 
