@@ -12,6 +12,7 @@ htmlcov/
 .env
 .env.*
 !.env.example
+!.env.development.example
 *.log
 *.dump
 .DS_Store

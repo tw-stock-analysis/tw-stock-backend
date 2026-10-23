@@ -1,0 +1,87 @@
+{
+  "verified_at": "2026-10-21T12:06:14.691051+00:00",
+  "environment": "Managed Linux Docker workspace; not a measurement on the user laptop or Docker Desktop VM",
+  "branch": "feat/local-docker-dev (both repositories, based on develop)",
+  "frontend_commit": "d2b8332",
+  "compose": {
+    "file": "docker-compose.dev.yml",
+    "project_for_verification": "twse-local-dev-check",
+    "image_builds": [
+      "backend",
+      "frontend"
+    ],
+    "default_browser_port": 3007,
+    "default_host_database_port": 5433,
+    "ports_bound_to_loopback": true,
+    "separate_from_nginx_project_volume_and_images": true,
+    "initialization_keeps_existing_secrets": true,
+    "initialization_file_mode_linux": "0600"
+  },
+  "tests": {
+    "backend": {
+      "passed": 346,
+      "skipped": 63,
+      "database": "separate empty twstock_tests",
+      "skipped_suites": "Optional Nginx gateway/live-source and migration round-trip suites"
+    },
+    "frontend": {
+      "passed": 111,
+      "max_workers": 1
+    },
+    "frontend_typecheck_and_build": "passed in development container",
+    "ruff": "passed",
+    "alembic_check": "No new upgrade operations detected"
+  },
+  "schema": {
+    "migration_head": "0004_account_rules",
+    "app_tables": [
+      "users",
+      "auth_sessions",
+      "verification_tokens",
+      "watchlists",
+      "watchlist_items"
+    ],
+    "market_tables": []
+  },
+  "smoke": {
+    "cookie_login_through_vite": true,
+    "restore_after_reload": true,
+    "revoke_other_device_204": true,
+    "csrf_wrong_origin_rejected": true,
+    "logout_204": true,
+    "frontend_hmr_websocket": true,
+    "browser_javascript_errors": 0,
+    "backend_reload": true,
+    "data_survives_compose_down_up": true,
+    "live_twse_proxy_request": {
+      "status": 200,
+      "rows": 1383,
+      "requests": 1
+    },
+    "memory_sample_after_page_load": [
+      {
+        "service": "frontend",
+        "memory": "256.6MiB / 768MiB",
+        "cpu": "0.01%"
+      },
+      {
+        "service": "backend",
+        "memory": "112.5MiB / 512MiB",
+        "cpu": "0.19%"
+      },
+      {
+        "service": "db",
+        "memory": "26.97MiB / 384MiB",
+        "cpu": "0.62%"
+      }
+    ],
+    "swagger_through_vite": true
+  },
+  "limits": {
+    "frontend_mib": 768,
+    "backend_mib": 512,
+    "postgresql_mib": 384,
+    "one_off_migrate_mib": 256
+  },
+  "data_policy": "Live TWSE request per query; no market database writes or quote cache. Only request count and row count are recorded."
+}

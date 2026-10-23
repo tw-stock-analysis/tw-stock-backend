@@ -1,0 +1,105 @@
+name: tw-stock-dev
+
+x-backend-dev: &backend-dev
+  image: tw-stock-backend:dev
+  build:
+    context: .
+    dockerfile: Dockerfile.dev
+  env_file:
+    - ${DEV_ENV_FILE:-.env.development}
+  environment:
+    APP_ENV: development
+    DATABASE_URL: ""
+    POSTGRES_HOST: db
+    POSTGRES_PORT: "5432"
+    AUTH_ALLOWED_ORIGINS: '["http://localhost:${DEV_WEB_PORT:-3007}","http://127.0.0.1:${DEV_WEB_PORT:-3007}"]'
+    PASSWORD_MAX_CONCURRENCY: "1"
+    WATCHFILES_FORCE_POLLING: "${DEV_USE_POLLING:-false}"
+    WATCHFILES_POLL_DELAY_MS: "500"
+  volumes:
+    - ./app:/app/app:ro
+    - ./alembic:/app/alembic
+    - ./alembic.ini:/app/alembic.ini:ro
+    - ./pyproject.toml:/app/pyproject.toml:ro
+    - ./uv.lock:/app/uv.lock:ro
+    - ./tests:/app/tests:ro
+  mem_limit: 512m
+  cpus: 1.0
+  init: true
+
+services:
+  frontend:
+    image: tw-stock-frontend:dev
+    build:
+      context: ${FRONTEND_CONTEXT:-../tw-stock-frontend}
+      dockerfile: Dockerfile.dev
+    environment:
+      FRONTEND_PORT: "3007"
+      API_PROXY_TARGET: http://backend:8000
+      DEV_USE_POLLING: "${DEV_USE_POLLING:-false}"
+    ports:
+      - "127.0.0.1:${DEV_WEB_PORT:-3007}:3007"
+    volumes:
+      - ${FRONTEND_CONTEXT:-../tw-stock-frontend}/src:/app/src:ro
+      - ${FRONTEND_CONTEXT:-../tw-stock-frontend}/tests:/app/tests:ro
+      - ${FRONTEND_CONTEXT:-../tw-stock-frontend}/index.html:/app/index.html:ro
+      - ${FRONTEND_CONTEXT:-../tw-stock-frontend}/vite.config.ts:/app/vite.config.ts:ro
+      - ${FRONTEND_CONTEXT:-../tw-stock-frontend}/tsconfig.json:/app/tsconfig.json:ro
+      - ${FRONTEND_CONTEXT:-../tw-stock-frontend}/package.json:/app/package.json:ro
+      - ${FRONTEND_CONTEXT:-../tw-stock-frontend}/package-lock.json:/app/package-lock.json:ro
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3007/').then(r => {if (!r.ok) process.exit(1)}).catch(() => process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      start_period: 10s
+      retries: 6
+    mem_limit: 768m
+    cpus: 1.0
+    init: true
+
+  backend:
+    <<: *backend-dev
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "from urllib.request import ProxyHandler, build_opener; build_opener(ProxyHandler({})).open('http://127.0.0.1:8000/api/v1/health/ready', timeout=4)"]
+      interval: 5s
+      timeout: 5s
+      start_period: 10s
+      retries: 10
+
+  migrate:
+    <<: *backend-dev
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    mem_limit: 256m
+    restart: "no"
+
+  db:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-twstock_dev}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run python scripts/init_dev_env.py first}
+      POSTGRES_DB: ${POSTGRES_DB:-twstock_dev}
+    command: ["postgres", "-c", "shared_buffers=64MB", "-c", "work_mem=4MB", "-c", "maintenance_work_mem=32MB", "-c", "max_connections=30"]
+    ports:
+      - "127.0.0.1:${DEV_DB_PORT:-5433}:5432"
+    volumes:
+      - dev_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      start_period: 5s
+      retries: 10
+    mem_limit: 384m
+    cpus: 1.0
+
+volumes:
+  dev_postgres_data:
