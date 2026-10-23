@@ -1,0 +1,25 @@
+{
+  "recorded_at": "2026-10-23T16:15:22.770755+00:00",
+  "scope": "FinMind daily history, MA20/60, monthly revenue, institutional trades; no market persistence",
+  "backend": {
+    "passed": 345,
+    "skipped": 184,
+    "lint": "passed",
+    "mypy": "passed",
+    "new_analysis_tests": 32,
+    "fixtures": "synthetic"
+  },
+  "frontend": {
+    "passed": 154,
+    "production_build": "passed",
+    "fixtures": "synthetic"
+  },
+  "live_finmind": {
+    "status": "blocked",
+    "reason": "Active managed environment allowlist lacks api.finmindtrade.com; HTTPS proxy tunnel returned 403",
+    "verified_real_finmind_datasets": 0
+  },
+  "market_database_changes": false,
+  "market_cache": false,
+  "automatic_retry": false
+}

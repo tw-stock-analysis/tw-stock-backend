@@ -2,18 +2,21 @@
 
 ## 目前已實作的契約
 
-目前共 **56 個 API 路由**：44 個逐次呼叫 TWSE 的交易端點、1 個目錄、2 個 health、4 個個股研究端點，以及 5 個認證端點。以以下文件與實際 FastAPI OpenAPI 為準：
+目前共 **64 個 API 路由**：44 個 TWSE 交易端點、1 個目錄、2 個 health、4 個個股摘要／搜尋、7 個研究工具、1 個 FinMind 歷史研究，以及 5 個認證端點。以以下文件與實際 FastAPI OpenAPI 為準：
 
 | 範圍 | 目前契約 |
 | --- | --- |
 | 公開行情與目錄 | [TWSE 交易資料](twse-trading-api.md) |
 | 公開個股搜尋與詳情 | [個股研究 API](stock-research-api.md) |
+| FinMind 歷史日線、營收、法人 | [歷史研究 API](finmind-analysis.md) |
+| 公開篩選、比較與市場總覽 | [研究工具](research-tools.md) |
+| 日曆與風險公告 | [日曆與公告](calendar-and-risks.md) |
 | 後端登入／裝置管理 | [認證 API](authentication-api.md) |
 | 已實作但尚未提供自選清單 HTTP API 的服務 | [帳號與清單服務](account-services.md) |
 
 認證端點為 `POST /auth/login`、`GET /me`、`POST /auth/logout`、`GET /me/sessions`、`POST /me/sessions/revoke-others`，皆加 `/api/v1` 前綴。使用固定 7 天 opaque Cookie Session；POST 檢查明確 Origin、`X-CSRF-Protection: 1` 與 JSON Content-Type。沒有匿名 Session、`/auth/csrf`、Refresh Token 或閒置續期；登出及登出其他裝置沒有 body，回 204。登入錯誤統一 `LOGIN_INVALID`，私人認證失效為 `SESSION_INVALID`。
 
-端點位於 `app/api/v1/endpoints`，`v1/router.py` 掛載，BaseModel 位於 `app/schemas`，使用案例位於 `app/services`。公開行情查詢每次向 TWSE 發送 HTTP，失敗直接回錯誤，不儲存／快取行情或回退舊資料。所有 API 回應為 no-store。認證及內部私人資料服務使用既有五張 `app` 表，migration head 為 `0004_account_rules`；沒有股票主檔或行情表。
+端點位於 `app/api/v1/endpoints`，`v1/router.py` 掛載，BaseModel 位於 `app/schemas`，使用案例位於 `app/services`。公開行情查詢每次向 TWSE／FinMind 發送 HTTP，失敗直接回錯誤，不儲存／快取行情或回退舊資料。所有 API 回應為 no-store。認證及內部私人資料服務使用既有五張 `app` 表，migration head 為 `0004_account_rules`；沒有股票主檔或行情表。
 
 ## 歷史產品草案（以下不是目前契約）
 

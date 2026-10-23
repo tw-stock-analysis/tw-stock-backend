@@ -69,7 +69,7 @@ curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
 
 ## 個股搜尋與詳情
 
-新增 4 個明確宣告的端點：`GET /api/v1/stocks`（q／page／limit）、`GET /api/v1/stocks/{code}`、`GET /api/v1/stocks/{code}/valuation`、`GET /api/v1/stocks/{code}/margin`。每次各自重新取得既有 TWSE 來源全集，在記憶體中搜尋或精確比對代碼，保留精確字串，不儲存或快取行情。連同下方研究工具，目前共有 **58 個公開端點、5 個認證端點，合計 63 個 API 路由**，不計 Swagger 文件頁。
+新增 4 個明確宣告的端點：`GET /api/v1/stocks`（q／page／limit）、`GET /api/v1/stocks/{code}`、`GET /api/v1/stocks/{code}/valuation`、`GET /api/v1/stocks/{code}/margin`。每次各自重新取得既有 TWSE 來源全集，在記憶體中搜尋或精確比對代碼，保留精確字串，不儲存或快取行情。連同下方研究工具與 FinMind 歷史研究，目前共有 **59 個公開端點、5 個認證端點，合計 64 個 API 路由**，不計 Swagger 文件頁。
 
 前端 `/stocks` 可搜尋選股，`/stocks/{code}` 依序取得成交、估值與資券，分別標示日期、取得時間及失敗狀態；來源未提供的資券日期不自行補上。完整契約與 154 項整合驗收見 [個股研究 API](docs/stock-research-api.md)。
 
@@ -78,6 +78,10 @@ curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
 新增 `/api/v1/research/screener`、`/screener/export`、`/compare`、`/overview` 四個公開 GET 端點。支援股價／漲跌幅／成交量篩選、精確數值排序與分頁、完整結果 CSV、2～4 檔成交估值比較，以及同一最新交易日的漲跌分布與排行。每次重新取得 TWSE，維持逐次請求、不入庫、不快取，這輪不修改 ORM 或 migration。完整條件、計算、日期與失敗處理見 [公開研究工具](docs/research-tools.md)。
 
 另提供 `/api/v1/research/calendar`、`/calendar/export`、`/risks`：除權息與開休市事項的日期篩選／ICS 下載，以及注意、處置、暫停交易公告彙整。支援個股頁按次取得風險公告、各來源狀態與部分失敗處理，沒有公告不解讀為無風險。完整契約見 [日曆與官方風險公告](docs/calendar-and-risks.md)。
+
+## FinMind 歷史研究
+
+新增 `GET /api/v1/stocks/{code}/analysis`，依序取得日線、月營收及法人資料，提供 MA20／MA60、營收成長率及法人累計。前端從個股摘要進入 `/stocks/:code/history`。後端選用 `FINMIND_API_TOKEN`，不增加 SDK、行情表或快取；日期、單位、部分失敗與只讀驗證指令見 [FinMind 契約](docs/finmind-analysis.md)。真實來源驗證仍待目前執行環境放行網域。
 
 ## 帳號與自選股資料表（SQLAlchemy ORM）
 
