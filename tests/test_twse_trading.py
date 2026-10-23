@@ -198,9 +198,13 @@ def test_openapi_keeps_public_market_endpoints_explicit_typed_and_unauthenticate
     public_paths = {
         path: operations
         for path, operations in schema["paths"].items()
-        if path.startswith(("/api/v1/twse/", "/api/v1/stocks", "/api/v1/health/"))
+        if path.startswith(
+            ("/api/v1/twse/", "/api/v1/stocks", "/api/v1/health/", "/api/v1/research/")
+        )
     }
-    assert len(public_paths) == 51  # 44 TWSE + catalogue + two health + four stock views.
+    assert (
+        len(public_paths) == 58
+    )  # 44 TWSE + catalogue + two health + four stock + seven research.
     assert not schema.get("security")
     for operations in public_paths.values():
         assert not operations["get"].get("security")
