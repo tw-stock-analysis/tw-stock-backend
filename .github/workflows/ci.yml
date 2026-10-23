@@ -1,0 +1,95 @@
+name: Backend CI
+
+on:
+  pull_request:
+    branches: [develop, master]
+  push:
+    branches: [develop, master, 'ci/**']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Python checks and PostgreSQL tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      APP_ENV: testing
+      POSTGRES_HOST: 127.0.0.1
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: ci_user
+      # Disposable service credentials; no development/production secrets.
+      POSTGRES_PASSWORD: ci_test_password
+      POSTGRES_DB: twstock_ci
+      DATABASE_URL: ""
+      RUN_DB_TESTS: "1"
+      RUN_MIGRATION_TESTS: "1"
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: ci_user
+          POSTGRES_PASSWORD: ci_test_password
+          POSTGRES_DB: twstock_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -h 127.0.0.1 -U ci_user -d twstock_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Set up uv and Python
+        uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+        with:
+          version: "0.11.26"
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Install locked dependencies
+        run: uv sync --locked
+      - name: Lint
+        run: uv run --frozen ruff check app tests .github/scripts
+      - name: Type-check
+        run: uv run --frozen mypy
+      - name: Apply and check migrations on disposable PostgreSQL
+        run: |
+          uv run --frozen alembic upgrade head
+          uv run --frozen alembic check
+      - name: Test including database and migration regression suites
+        run: uv run --frozen pytest -q
+
+  docker:
+    name: Build and smoke-test runtime image
+    needs: test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - name: Build runtime image without publishing
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          load: true
+          tags: tw-stock-backend:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - name: Verify production settings, migrations and readiness
+        run: python3 .github/scripts/smoke_backend.py tw-stock-backend:ci

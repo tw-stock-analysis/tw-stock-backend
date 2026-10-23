@@ -2,6 +2,12 @@
 
 使用 Python 3.12、FastAPI 與 uv。
 
+## GitHub Actions CI
+
+[Backend CI](.github/workflows/ci.yml) 在對 develop／master 的 PR，以及 develop／master／ci/** 分支的 push 時執行。先以 Python 3.12、鎖定的 uv 版本執行 Ruff、mypy、migration 檢查及 PostgreSQL 整合測試；通過後建置標準 Dockerfile，實際啟動映像驗證正式環境設定、migration 與 readiness。
+
+所有測試資料庫皆在 GitHub Runner 建立並於工作結束後丟棄，不連到開發或正式資料庫。CI 的 TWSE 測試使用受控回應；真實來源驗證保留獨立手動執行。觸發規則、範圍及失敗排查見 [CI 說明](docs/ci.md)。
+
 ## 安裝
 
 在 backend 資料夾執行：
