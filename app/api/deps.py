@@ -4,6 +4,7 @@ from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_session
+from app.services.advanced_research import AdvancedResearchService
 from app.services.finmind import FinMindService
 from app.services.notices import NoticeService
 from app.services.research import ResearchService
@@ -57,4 +58,15 @@ def get_stock_analysis_service(
 
 StockAnalysisServiceDependency = Annotated[
     StockAnalysisService, Depends(get_stock_analysis_service)
+]
+
+
+def get_advanced_research_service(
+    stocks: StockServiceDependency, finmind: FinMindServiceDependency
+) -> AdvancedResearchService:
+    return AdvancedResearchService(stocks, finmind)
+
+
+AdvancedResearchServiceDependency = Annotated[
+    AdvancedResearchService, Depends(get_advanced_research_service)
 ]

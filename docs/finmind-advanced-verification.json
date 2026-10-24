@@ -1,0 +1,248 @@
+{
+  "recorded_at": "2026-10-24T10:08:53.384803+00:00",
+  "backend_parent_commit": "2c1300a",
+  "scope": "Eight fixed FinMind research topics; no market persistence/cache or automatic retry",
+  "tests": {
+    "passed": 384,
+    "skipped": 184,
+    "advanced_research_tests": 28,
+    "ruff": "passed",
+    "mypy_source_files": 59,
+    "skip_reason": "Opt-in database, migration and external integration suites not enabled; live market checks ran separately without a database engine."
+  },
+  "live_api": {
+    "verified_at": "2026-10-24T10:01:12.881923+00:00",
+    "topology": "FastAPI ASGI routes -> real TWSE and FinMind; no lifespan/database engine",
+    "authentication": "anonymous",
+    "database_session_calls": 0,
+    "contains_market_records": false,
+    "cases": [
+      {
+        "topic": "valuation",
+        "code": "2330",
+        "start_date": "2025-01-01",
+        "end_date": "2026-07-31",
+        "complete": true,
+        "source_requests": [
+          "TWSE",
+          "TaiwanStockPER"
+        ],
+        "blocks": [
+          {
+            "id": "valuation",
+            "status": "ok",
+            "rows": 381,
+            "error_code": null
+          }
+        ]
+      },
+      {
+        "topic": "dividends",
+        "code": "2330",
+        "start_date": "2025-01-01",
+        "end_date": "2026-07-31",
+        "complete": true,
+        "source_requests": [
+          "TWSE",
+          "TaiwanStockDividend"
+        ],
+        "blocks": [
+          {
+            "id": "dividends",
+            "status": "ok",
+            "rows": 6,
+            "error_code": null
+          }
+        ]
+      },
+      {
+        "topic": "financials",
+        "code": "2330",
+        "start_date": "2025-01-01",
+        "end_date": "2026-07-31",
+        "complete": true,
+        "source_requests": [
+          "TWSE",
+          "TaiwanStockFinancialStatements",
+          "TaiwanStockBalanceSheet",
+          "TaiwanStockCashFlowsStatement"
+        ],
+        "blocks": [
+          {
+            "id": "earnings",
+            "status": "ok",
+            "rows": 6,
+            "error_code": null
+          },
+          {
+            "id": "income",
+            "status": "ok",
+            "rows": 102,
+            "error_code": null
+          },
+          {
+            "id": "balance",
+            "status": "ok",
+            "rows": 604,
+            "error_code": null
+          },
+          {
+            "id": "cashflow",
+            "status": "ok",
+            "rows": 168,
+            "error_code": null
+          }
+        ]
+      },
+      {
+        "topic": "fill",
+        "code": "2330",
+        "start_date": "2025-01-01",
+        "end_date": "2026-07-31",
+        "complete": true,
+        "source_requests": [
+          "TWSE",
+          "TaiwanStockDividendResult",
+          "TaiwanStockPrice",
+          "TaiwanStockSplitPrice",
+          "TaiwanStockCapitalReductionReferencePrice",
+          "TaiwanStockParValueChange"
+        ],
+        "blocks": [
+          {
+            "id": "fill_progress",
+            "status": "ok",
+            "rows": 6,
+            "error_code": null
+          },
+          {
+            "id": "events",
+            "status": "ok",
+            "rows": 6,
+            "error_code": null
+          },
+          {
+            "id": "prices",
+            "status": "ok",
+            "rows": 381,
+            "error_code": null
+          },
+          {
+            "id": "splits",
+            "status": "ok",
+            "rows": 0,
+            "error_code": null
+          },
+          {
+            "id": "reductions",
+            "status": "ok",
+            "rows": 0,
+            "error_code": null
+          },
+          {
+            "id": "par_changes",
+            "status": "ok",
+            "rows": 0,
+            "error_code": null
+          }
+        ]
+      },
+      {
+        "topic": "adjusted",
+        "code": "2330",
+        "start_date": "2026-07-01",
+        "end_date": "2026-07-31",
+        "complete": false,
+        "source_requests": [
+          "TWSE",
+          "TaiwanStockPriceAdj",
+          "TaiwanStockPrice"
+        ],
+        "blocks": [
+          {
+            "id": "adjusted",
+            "status": "error",
+            "rows": null,
+            "error_code": "FINMIND_ACCESS_DENIED"
+          },
+          {
+            "id": "prices",
+            "status": "ok",
+            "rows": 22,
+            "error_code": null
+          }
+        ]
+      },
+      {
+        "topic": "ownership",
+        "code": "2330",
+        "start_date": "2026-07-01",
+        "end_date": "2026-07-31",
+        "complete": false,
+        "source_requests": [
+          "TWSE",
+          "TaiwanStockHoldingSharesPer"
+        ],
+        "blocks": [
+          {
+            "id": "ownership",
+            "status": "error",
+            "rows": null,
+            "error_code": "FINMIND_ACCESS_DENIED"
+          }
+        ]
+      },
+      {
+        "topic": "brokers",
+        "code": "2330",
+        "start_date": "2026-07-31",
+        "end_date": "2026-07-31",
+        "complete": false,
+        "source_requests": [
+          "TWSE",
+          "brokers"
+        ],
+        "blocks": [
+          {
+            "id": "brokers",
+            "status": "error",
+            "rows": null,
+            "error_code": "FINMIND_ACCESS_DENIED"
+          }
+        ]
+      },
+      {
+        "topic": "etf",
+        "code": "00981A",
+        "start_date": "2026-07-01",
+        "end_date": "2026-07-31",
+        "complete": false,
+        "source_requests": [
+          "TWSE",
+          "TaiwanStockActiveETFHolding",
+          "TaiwanStockActiveETFHoldingChange"
+        ],
+        "blocks": [
+          {
+            "id": "holdings",
+            "status": "error",
+            "rows": null,
+            "error_code": "FINMIND_ACCESS_DENIED"
+          },
+          {
+            "id": "holding_changes",
+            "status": "error",
+            "rows": null,
+            "error_code": "FINMIND_ACCESS_DENIED"
+          }
+        ]
+      }
+    ]
+  },
+  "paid_success_live_verified": false,
+  "paid_success_validation": "Official documentation plus synthetic API and component tests; real anonymous access-denied responses verified.",
+  "market_database_changes": false,
+  "market_cache": false,
+  "automatic_retry": false,
+  "contains_market_records": false
+}

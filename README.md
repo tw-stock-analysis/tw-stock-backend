@@ -69,7 +69,7 @@ curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
 
 ## 個股搜尋與詳情
 
-新增 4 個明確宣告的端點：`GET /api/v1/stocks`（q／page／limit）、`GET /api/v1/stocks/{code}`、`GET /api/v1/stocks/{code}/valuation`、`GET /api/v1/stocks/{code}/margin`。每次各自重新取得既有 TWSE 來源全集，在記憶體中搜尋或精確比對代碼，保留精確字串，不儲存或快取行情。連同下方研究工具與 FinMind 歷史研究，目前共有 **59 個公開端點、5 個認證端點，合計 64 個 API 路由**，不計 Swagger 文件頁。
+新增 4 個明確宣告的端點：`GET /api/v1/stocks`（q／page／limit）、`GET /api/v1/stocks/{code}`、`GET /api/v1/stocks/{code}/valuation`、`GET /api/v1/stocks/{code}/margin`。每次各自重新取得既有 TWSE 來源全集，在記憶體中搜尋或精確比對代碼，保留精確字串，不儲存或快取行情。連同下方研究工具與 FinMind 歷史研究，目前共有 **60 個公開端點、5 個認證端點，合計 65 個 API 路由**，不計 Swagger 文件頁。
 
 前端 `/stocks` 可搜尋選股，`/stocks/{code}` 依序取得成交、估值與資券，分別標示日期、取得時間及失敗狀態；來源未提供的資券日期不自行補上。完整契約與 154 項整合驗收見 [個股研究 API](docs/stock-research-api.md)。
 
@@ -84,6 +84,8 @@ curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
 新增 `GET /api/v1/stocks/{code}/analysis`，依序取得日線、月營收及法人資料，提供 MA20／MA60、營收成長率及法人累計。前端從個股摘要進入 `/stocks/:code/history`。後端選用 `FINMIND_API_TOKEN`，不增加 SDK、行情表或快取；日期、單位、部分失敗與只讀驗證指令見 [FinMind 契約](docs/finmind-analysis.md)。已於 2026-10-24（台北）完成匿名真實來源與前後端串接驗證，結果見 [驗證紀錄](docs/finmind-verification.json)。
 
 同一歷史研究回應另提供 RSI14、MACD（12／26／9）、布林通道，以及年初累計／近 12 個月營收與年增率。前端切換視圖不新增來源請求；無公告成交價不以零元計算指標，營收缺月不補零。定義與暖機規則見上述契約，實測見 [指標與累計營收驗證](docs/finmind-indicators-verification.json)。
+
+另新增固定主題的 `GET /api/v1/stocks/{code}/research`，支援歷史估值、歷年股利、收盤填息、財報三表／EPS、還原股價、持股分級、券商分點與主動式 ETF 持股。匿名真實驗證已通過四項免費研究及付費拒絕流程；付費成功回應仍待具權限 Token 實測。來源、口徑與日期上限見 [進階研究契約](docs/finmind-advanced-research.md)。
 
 ## 帳號與自選股資料表（SQLAlchemy ORM）
 

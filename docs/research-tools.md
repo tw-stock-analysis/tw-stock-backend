@@ -12,7 +12,7 @@
 | `/api/v1/research/calendar/export` | 完整日期事件 ICS | 重新取得所選日曆來源 |
 | `/api/v1/research/risks` | 注意、處置、暫停交易公告 | 所選公告來源各一次，依序執行 |
 
-端點明確宣告於 `app/api/v1/endpoints/research.py`，成交研究輸入輸出及計算位於 `app/schemas/research.py`／`app/services/research.py`；日曆與公告使用 `app/schemas/notices.py`／`app/services/notices.py`。目前共有 **58 個公開端點、5 個認證端點，合計 63 個 API 路由**，不計文件頁。日曆條件、ICS 與公告空標記、部分失敗行為見 [日曆與官方風險公告](calendar-and-risks.md)。
+端點明確宣告於 `app/api/v1/endpoints/research.py`，成交研究輸入輸出及計算位於 `app/schemas/research.py`／`app/services/research.py`；日曆與公告使用 `app/schemas/notices.py`／`app/services/notices.py`。目前共有 **60 個公開端點、5 個認證端點，合計 65 個 API 路由**，不計文件頁。日曆條件、ICS 與公告空標記、部分失敗行為見 [日曆與官方風險公告](calendar-and-risks.md)。
 
 ## 篩選與排序
 

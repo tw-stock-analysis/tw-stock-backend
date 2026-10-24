@@ -41,7 +41,7 @@ class FinMindMeta(APIModel):
     query_end: date
     row_count: int
     retrieval: Literal["on_request"] = "on_request"
-    price_basis: Literal["unadjusted"] | None = None
+    price_basis: Literal["unadjusted", "source_adjusted"] | None = None
     units: dict[str, str]
 
 

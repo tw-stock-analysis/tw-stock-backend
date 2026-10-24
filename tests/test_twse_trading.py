@@ -202,9 +202,7 @@ def test_openapi_keeps_public_market_endpoints_explicit_typed_and_unauthenticate
             ("/api/v1/twse/", "/api/v1/stocks", "/api/v1/health/", "/api/v1/research/")
         )
     }
-    assert (
-        len(public_paths) == 59
-    )  # 44 TWSE + catalogue + two health + four stock + seven research + FinMind analysis.
+    assert len(public_paths) == 60  # Existing public routes plus fixed-topic FinMind research.
     assert not schema.get("security")
     for operations in public_paths.values():
         assert not operations["get"].get("security")
