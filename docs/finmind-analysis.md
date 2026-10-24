@@ -1,5 +1,7 @@
 # FinMind 個股歷史研究
 
+本文件原有 `/stocks/{code}` 路由保留上市來源邊界；新增多市場 `/instruments/{market}/{code}` 研究入口見 [多市場與工作區](research-workspace.md)。
+
 新增 `GET /api/v1/stocks/{code}/analysis`，對應前端 `/stocks/:code/history`。
 
 ## 設定與驗證

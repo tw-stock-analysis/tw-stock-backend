@@ -55,7 +55,7 @@ class ResearchBlock(APIModel):
 class AdvancedResponse(APIModel):
     code: str
     name: str
-    market: Literal["TWSE"] = "TWSE"
+    market: Literal["TWSE", "TPEX", "EMERGING", "DELISTED"] = "TWSE"
     topic: ResearchTopic
     start_date: date
     end_date: date

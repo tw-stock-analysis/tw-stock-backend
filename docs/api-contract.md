@@ -2,10 +2,11 @@
 
 ## 目前已實作的契約
 
-目前共 **64 個 API 路由**：44 個 TWSE 交易端點、1 個目錄、2 個 health、4 個個股摘要／搜尋、7 個研究工具、1 個 FinMind 歷史研究，以及 5 個認證端點。以以下文件與實際 FastAPI OpenAPI 為準：
+目前共 **77 個 API 操作**：66 個公開行情／研究端點、5 個認證端點及 6 個私人工作區操作。以以下文件與實際 FastAPI OpenAPI 為準：
 
 | 範圍 | 目前契約 |
 | --- | --- |
+| 多市場／基本面選股／私人工作區／投資組合／回測 | [研究工作區](research-workspace.md) |
 | 公開行情與目錄 | [TWSE 交易資料](twse-trading-api.md) |
 | 公開個股搜尋與詳情 | [個股研究 API](stock-research-api.md) |
 | FinMind 歷史日線、營收、法人 | [歷史研究 API](finmind-analysis.md) |
@@ -16,11 +17,11 @@
 
 認證端點為 `POST /auth/login`、`GET /me`、`POST /auth/logout`、`GET /me/sessions`、`POST /me/sessions/revoke-others`，皆加 `/api/v1` 前綴。使用固定 7 天 opaque Cookie Session；POST 檢查明確 Origin、`X-CSRF-Protection: 1` 與 JSON Content-Type。沒有匿名 Session、`/auth/csrf`、Refresh Token 或閒置續期；登出及登出其他裝置沒有 body，回 204。登入錯誤統一 `LOGIN_INVALID`，私人認證失效為 `SESSION_INVALID`。
 
-端點位於 `app/api/v1/endpoints`，`v1/router.py` 掛載，BaseModel 位於 `app/schemas`，使用案例位於 `app/services`。公開行情查詢每次向 TWSE／FinMind 發送 HTTP，失敗直接回錯誤，不儲存／快取行情或回退舊資料。所有 API 回應為 no-store。認證及內部私人資料服務使用既有五張 `app` 表，migration head 為 `0004_account_rules`；沒有股票主檔或行情表。
+端點位於 `app/api/v1/endpoints`，`v1/router.py` 掛載，BaseModel 位於 `app/schemas`，使用案例位於 `app/services`。公開行情查詢每次向 TWSE／FinMind 發送 HTTP，失敗直接回錯誤，不儲存／快取行情或回退舊資料。所有 API 回應為 no-store。認證及內部私人資料服務使用六張 `app` 表，migration head 為 `0005_workspace`；沒有股票主檔或行情表。
 
 ## 歷史產品草案（以下不是目前契約）
 
-下方保留早期完整產品構想，尚未重新核准或完整實作。它包含與目前決策不同的匿名 Session、同步 CSRF Token、到期政策、認證回應、資料表及行情快取；不能據此呼叫現有 API 或判斷目前功能。前端登入／登出與裝置管理已交付；公開註冊、寄信及帳號恢復 HTTP API 仍待後續；UUID 股票主檔、財報、行情匯入／舊資料回退也不在目前範圍。舊 `/instruments`、`/quotes`、`/market/status` 與匯入流程已從未合併分支移除。
+下方保留早期完整產品構想，尚未重新核准或完整實作。它包含與目前決策不同的匿名 Session、同步 CSRF Token、到期政策、認證回應、資料表及行情快取；不能據此呼叫現有 API 或判斷目前功能。前端登入／登出與裝置管理已交付；公開註冊、寄信及帳號恢復 HTTP API 仍待後續；UUID 股票主檔、財報、行情匯入／舊資料回退也不在目前範圍。舊 UUID 證券主檔、`/quotes`、`/market/status` 與匯入流程仍不提供；目前 `/instruments` 是新的逐次來源參考名錄，詳見上表。
 
 ### 1. 共通規則（歷史草案）
 

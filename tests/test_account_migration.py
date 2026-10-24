@@ -181,7 +181,7 @@ async def test_email_reuse_blocks_unsafe_downgrade_without_deleting_accounts(mig
     async with migration_db.factory() as session:
         assert (
             await session.scalar(text("SELECT version_num FROM alembic_version"))
-            == "0004_account_rules"
+            == "0005_workspace"
         )
         assert await session.get(User, old_id) is not None
         assert await session.get(User, new_id) is not None

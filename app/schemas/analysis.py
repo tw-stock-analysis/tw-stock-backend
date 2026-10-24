@@ -37,8 +37,9 @@ class FinMindMeta(APIModel):
     dataset: str
     source_url: str = "https://api.finmindtrade.com/api/v4/data"
     retrieved_at: datetime
-    query_start: date
-    query_end: date
+    query_start: date | None
+    query_end: date | None
+    request_scope: Literal["stock_range", "catalogue"] = "stock_range"
     row_count: int
     retrieval: Literal["on_request"] = "on_request"
     price_basis: Literal["unadjusted", "source_adjusted"] | None = None
@@ -112,7 +113,7 @@ class InstitutionPoint(APIModel):
 class StockAnalysisResponse(APIModel):
     code: str
     name: str
-    market: Literal["TWSE"] = "TWSE"
+    market: Literal["TWSE", "TPEX", "EMERGING", "DELISTED"] = "TWSE"
     start_date: date
     end_date: date
     revenue_start_month: str

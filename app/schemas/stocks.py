@@ -18,7 +18,7 @@ class StockSearchQuery(APIModel):
 
 
 class StockSource(APIModel):
-    source: Literal["TWSE"] = "TWSE"
+    source: Literal["TWSE", "FinMind"] = "TWSE"
     source_url: str
     retrieved_at: datetime
     data_date: str | None = None

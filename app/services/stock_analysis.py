@@ -18,7 +18,7 @@ from app.schemas.analysis import (
 )
 from app.services.errors import ServiceError
 from app.services.finmind import FinMindService, Row, invalid_data
-from app.services.stocks import StockService
+from app.services.stocks import QuoteProvider
 from app.services.technical_indicators import technical_indicators
 
 LABELS = {
@@ -244,7 +244,7 @@ def institution_points(
 
 
 class StockAnalysisService:
-    def __init__(self, stocks: StockService, finmind: FinMindService):
+    def __init__(self, stocks: QuoteProvider, finmind: FinMindService):
         self.stocks = stocks
         self.finmind = finmind
 
@@ -259,7 +259,7 @@ class StockAnalysisService:
                 raise ServiceError("REQUEST_CANCELLED", "查詢已取消。", 499)
 
         await check_connection()
-        # Retain the existing TWSE-only market boundary. No DB or persisted stock master.
+        # The route supplies the identity provider; no persisted stock master.
         identity = await self.stocks.quote(code)
         start, end = query.start_date, query.end_date
         assert start is not None  # AnalysisQuery fills and validates this before any source call.

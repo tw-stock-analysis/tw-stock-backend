@@ -7,6 +7,7 @@ from app.db.session import get_session
 from app.services.advanced_research import AdvancedResearchService
 from app.services.finmind import FinMindService
 from app.services.notices import NoticeService
+from app.services.request_source import RequestSource
 from app.services.research import ResearchService
 from app.services.stock_analysis import StockAnalysisService
 from app.services.stocks import StockService
@@ -70,3 +71,10 @@ def get_advanced_research_service(
 AdvancedResearchServiceDependency = Annotated[
     AdvancedResearchService, Depends(get_advanced_research_service)
 ]
+
+
+def get_request_source(request: Request, source: FinMindServiceDependency) -> FinMindService:
+    return RequestSource(source, request.is_disconnected)
+
+
+RequestSourceDependency = Annotated[FinMindService, Depends(get_request_source)]

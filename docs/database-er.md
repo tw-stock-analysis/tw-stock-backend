@@ -1,12 +1,13 @@
 # 目前 ER 圖
 
-五張表都位於 `app` schema，對應 SQLAlchemy ORM 與 Alembic `0004_account_rules`；`market` schema 沒有資料表。
+六張表都位於 `app` schema，對應 SQLAlchemy ORM 與 Alembic `0005_workspace`；`market` schema 沒有資料表。
 
 ```mermaid
 erDiagram
     direction LR
     users ||--o{ auth_sessions : "ON DELETE CASCADE"
     users ||--o{ verification_tokens : "ON DELETE CASCADE"
+    users ||--o{ workspace_items : "ON DELETE CASCADE"
     users ||--o{ watchlists : "ON DELETE CASCADE"
     watchlists ||--o{ watchlist_items : "ON DELETE CASCADE"
 
@@ -50,6 +51,16 @@ erDiagram
         timestamptz created_at
         timestamptz updated_at
     }
+    workspace_items {
+        uuid id PK
+        uuid user_id FK
+        varchar(20) kind
+        varchar(100) name
+        jsonb payload "使用者輸入"
+        integer version
+        timestamptz created_at
+        timestamptz updated_at
+    }
     watchlist_items {
         uuid watchlist_id PK, FK
         varchar(16) market PK
@@ -72,3 +83,5 @@ PK＝主鍵，FK＝外鍵，UK＝單欄唯一。圖中未把條件唯一或複�
 status 僅允許 `pending_verification`、`active`、`disabled`；purpose 僅允許 `verify_email`、`reset_password`。
 四條外鍵均 `ON DELETE CASCADE`，只作用於硬刪除。軟刪除透過服務撤銷憑證，重新註冊不繼承舊資料。
 清單 10 份／股票 100 檔、即時 TWSE 驗證、原子消耗及過期 30 天清理由服務負責，詳見 [服務說明](account-services.md)。
+
+工作區新增 `UNIQUE (user_id,kind,lower(name))`、版本與 kind CHECK，payload 僅接受已驗證使用者文件，無行情。詳細資料規則見 [研究工作區](research-workspace.md)。

@@ -19,7 +19,7 @@ from app.schemas.analysis import AnalysisError, AnalysisSection
 from app.services import research_transforms as transform
 from app.services.errors import ServiceError
 from app.services.finmind import FinMindService, Row, source_error
-from app.services.stocks import StockService
+from app.services.stocks import QuoteProvider
 
 
 @dataclass(frozen=True)
@@ -218,7 +218,7 @@ def block(key: str) -> ResearchBlock:
 
 
 class AdvancedResearchService:
-    def __init__(self, stocks: StockService, finmind: FinMindService):
+    def __init__(self, stocks: QuoteProvider, finmind: FinMindService):
         self.stocks, self.finmind = stocks, finmind
 
     async def research(

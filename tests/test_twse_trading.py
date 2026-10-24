@@ -98,7 +98,6 @@ def test_no_generic_proxy_or_retired_data_import_routes(api):
             "/api/v1/twse/opendata/t187ap03_L",
             "/api/v1/realtime/2330/quote",
             "/api/v1/data-sources",
-            "/api/v1/instruments",
             "/api/v1/quotes",
             "/api/v1/market/status",
         ):
@@ -199,13 +198,20 @@ def test_openapi_keeps_public_market_endpoints_explicit_typed_and_unauthenticate
         path: operations
         for path, operations in schema["paths"].items()
         if path.startswith(
-            ("/api/v1/twse/", "/api/v1/stocks", "/api/v1/health/", "/api/v1/research/")
+            (
+                "/api/v1/twse/",
+                "/api/v1/stocks",
+                "/api/v1/health/",
+                "/api/v1/research/",
+                "/api/v1/instruments",
+            )
         )
     }
-    assert len(public_paths) == 60  # Existing public routes plus fixed-topic FinMind research.
+    assert len(public_paths) == 66  # Existing public routes plus fixed-topic FinMind research.
     assert not schema.get("security")
     for operations in public_paths.values():
-        assert not operations["get"].get("security")
+        for operation in operations.values():
+            assert not operation.get("security")
     for dataset in DATASETS:
         operation = schema["paths"][dataset.endpoint]["get"]
         assert operation["responses"]["200"]["content"]["application/json"]["schema"][

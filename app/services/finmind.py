@@ -32,6 +32,7 @@ DATASETS = frozenset(
     }
 )
 BROKER_URL = "https://api.finmindtrade.com/api/v4/taiwan_stock_trading_daily_report"
+CATALOGUES = frozenset({"TaiwanStockInfo", "TaiwanStockDelisting"})
 MAX_BYTES = 8 * 1024 * 1024
 MAX_ROWS = 15_000
 Row = dict[str, str | None]
@@ -134,6 +135,25 @@ class FinMindService:
         if dataset == "TaiwanStockParValueChange":
             # This source only accepts a market-wide query; filter code in its transform.
             params.pop("data_id")
+        return await self._request(dataset, params, start, end, url)
+
+    async def catalogue(self, dataset: str) -> tuple[list[Row], FinMindMeta]:
+        if dataset not in CATALOGUES:
+            raise ValueError("Catalogue is not allowlisted")
+        today = datetime.now(UTC).date()
+        rows, meta = await self._request(dataset, {"dataset": dataset}, date(1994, 10, 1), today)
+        # Catalogue calls do not send a temporal filter or establish historical coverage.
+        meta.query_start, meta.query_end, meta.request_scope = None, None, "catalogue"
+        return rows, meta
+
+    async def _request(
+        self,
+        dataset: str,
+        params: dict[str, str],
+        start: date,
+        end: date,
+        url: str = SOURCE_URL,
+    ) -> tuple[list[Row], FinMindMeta]:
         headers = {"Accept": "application/json", "Cache-Control": "no-cache"}
         if self._token:
             headers["Authorization"] = f"Bearer {self._token}"

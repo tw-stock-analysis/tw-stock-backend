@@ -1,5 +1,7 @@
 """Fresh source retrieval followed by in-memory filtering; no cache or database."""
 
+from typing import Protocol
+
 from app.schemas.common import Pagination
 from app.schemas.stocks import (
     StockMargin,
@@ -18,6 +20,10 @@ from app.services.twse import TwseService, invalid_data
 from app.services.twse_catalog import BY_ID
 
 Row = dict[str, str | None]
+
+
+class QuoteProvider(Protocol):
+    async def quote(self, code: str) -> StockQuoteResponse: ...
 
 
 def required_text(row: Row, key: str) -> str:

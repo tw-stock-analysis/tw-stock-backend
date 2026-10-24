@@ -3,7 +3,7 @@
 已實作 Email／密碼帳號的三張資料表、SQLAlchemy 2 ORM 模型與 Alembic migration。
 同一帳號允許多裝置登入，支援登出其他裝置，並備妥驗證 Email 與忘記密碼所需欄位及內部服務。
 帳號、Session、驗證 Token 與到期清理介面詳見 [帳號與清單服務](account-services.md)。[後端認證 API](authentication-api.md) 已提供 Argon2id 密碼比對、Cookie／CSRF、固定 7 天登入與裝置管理；前端已接上登入／登出與裝置管理；公開註冊、寄信及帳號恢復入口留待後續實作。本輪認證不新增表或 migration。
-已接續新增 [自選清單兩表](watchlist-tables.md)，其他 table 繼續討論後才新增；TWSE 仍逐次請求，不寫行情資料庫、不快取。
+已接續新增 [自選清單兩表](watchlist-tables.md)，再新增 [私人研究文件表](research-workspace.md)，目前 migration head 為 `0005_workspace`；TWSE 仍逐次請求，不寫行情資料庫、不快取。
 
 ## 模型與關聯
 

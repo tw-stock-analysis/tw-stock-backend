@@ -25,14 +25,24 @@ class AuthSecurityMiddleware:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         path = get_route_path(scope) if scope["type"] == "http" else ""
-        if scope["type"] != "http" or scope["method"] != "POST" or path not in AUTH_MUTATIONS:
+        private_mutation = path.startswith("/api/v1/workspace/items") and scope.get("method") in {
+            "POST",
+            "PUT",
+            "DELETE",
+        }
+        public_research = (
+            path in {"/api/v1/research/factors", "/api/v1/research/backtest"}
+            and scope.get("method") == "POST"
+        )
+        auth_mutation = path in AUTH_MUTATIONS and scope.get("method") == "POST"
+        if scope["type"] != "http" or not (private_mutation or public_research or auth_mutation):
             await self.app(scope, receive, send)
             return
 
         request = Request(scope)
         origins = request.headers.getlist("origin")
         csrf_headers = request.headers.getlist("x-csrf-protection")
-        if (
+        if not public_research and (
             len(origins) != 1
             or origins[0] not in self.settings.auth_allowed_origins
             or csrf_headers != ["1"]
@@ -70,7 +80,7 @@ class AuthSecurityMiddleware:
             if message["type"] == "http.disconnect":
                 return
             chunk = message.get("body", b"")
-            if len(body) + len(chunk) > MAX_AUTH_BODY_BYTES:
+            if len(body) + len(chunk) > (131_072 if private_mutation else MAX_AUTH_BODY_BYTES):
                 await error_response(request, 413, "BODY_TOO_LARGE", "請求內容超過大小限制。")(
                     scope, receive, send
                 )
@@ -78,7 +88,7 @@ class AuthSecurityMiddleware:
             body.extend(chunk)
             if not message.get("more_body", False):
                 break
-        if path != "/api/v1/auth/login" and body:
+        if auth_mutation and path != "/api/v1/auth/login" and body:
             await error_response(request, 422, "BODY_NOT_ALLOWED", "此操作不接受 request body。")(
                 scope, receive, send
             )
