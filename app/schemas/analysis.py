@@ -39,7 +39,7 @@ class FinMindMeta(APIModel):
     retrieved_at: datetime
     query_start: date | None
     query_end: date | None
-    request_scope: Literal["stock_range", "catalogue"] = "stock_range"
+    request_scope: Literal["stock_range", "catalogue", "market_snapshot"] = "stock_range"
     row_count: int
     retrieval: Literal["on_request"] = "on_request"
     price_basis: Literal["unadjusted", "source_adjusted"] | None = None

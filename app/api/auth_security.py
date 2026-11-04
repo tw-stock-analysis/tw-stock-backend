@@ -31,7 +31,13 @@ class AuthSecurityMiddleware:
             "DELETE",
         }
         public_research = (
-            path in {"/api/v1/research/factors", "/api/v1/research/backtest"}
+            path
+            in {
+                "/api/v1/research/factors",
+                "/api/v1/research/backtest",
+                "/api/v1/research/market-screen",
+                "/api/v1/research/portfolio-backtest",
+            }
             and scope.get("method") == "POST"
         )
         auth_mutation = path in AUTH_MUTATIONS and scope.get("method") == "POST"

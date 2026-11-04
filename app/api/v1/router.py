@@ -6,6 +6,7 @@ from app.api.v1.endpoints import (
     instruments,
     lab,
     research,
+    security_identity,
     stocks,
     twse,
     workspace,
@@ -24,3 +25,5 @@ router.include_router(authentication.router)
 router.include_router(instruments.router)
 router.include_router(workspace.router)
 router.include_router(lab.router)
+
+router.include_router(security_identity.router)

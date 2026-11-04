@@ -33,6 +33,11 @@ DATASETS = frozenset(
 )
 BROKER_URL = "https://api.finmindtrade.com/api/v4/taiwan_stock_trading_daily_report"
 CATALOGUES = frozenset({"TaiwanStockInfo", "TaiwanStockDelisting"})
+SNAPSHOTS = frozenset(
+    {"TaiwanStockMonthRevenue", "TaiwanStockFinancialStatements", "TaiwanStockBalanceSheet"}
+)
+SNAPSHOT_MAX_BYTES = 64 * 1024 * 1024
+SNAPSHOT_MAX_ROWS = 300_000
 MAX_BYTES = 8 * 1024 * 1024
 MAX_ROWS = 15_000
 Row = dict[str, str | None]
@@ -59,7 +64,7 @@ def permission_message(value: object) -> bool:
     )
 
 
-def decode_rows(content: bytes) -> list[Row]:
+def decode_rows(content: bytes, *, max_rows: int | None = None) -> list[Row]:
     def unique_object(pairs):
         result = dict(pairs)
         if len(result) != len(pairs):
@@ -87,7 +92,13 @@ def decode_rows(content: bytes) -> list[Row]:
         if status != "200":
             raise ValueError("Unknown API status")
         rows = body.get("data")
-        if not isinstance(rows, list) or len(rows) > MAX_ROWS:
+        if isinstance(rows, list) and len(rows) > (MAX_ROWS if max_rows is None else max_rows):
+            if max_rows is not None:
+                raise ServiceError(
+                    "FINMIND_SNAPSHOT_TOO_LARGE", "全市場快照超過大小限制，未使用不完整資料。", 502
+                )
+            raise ValueError("Too many rows")
+        if not isinstance(rows, list):
             raise ValueError("Not a bounded array")
         for row in rows:
             if (
@@ -146,6 +157,22 @@ class FinMindService:
         meta.query_start, meta.query_end, meta.request_scope = None, None, "catalogue"
         return rows, meta
 
+    async def snapshot(self, dataset: str, day: date) -> tuple[list[Row], FinMindMeta]:
+        if dataset not in SNAPSHOTS:
+            raise ValueError("Snapshot dataset is not allowlisted")
+        rows, meta = await self._request(
+            dataset,
+            {"dataset": dataset, "start_date": day.isoformat()},
+            day,
+            day,
+            max_bytes=SNAPSHOT_MAX_BYTES,
+            max_rows=SNAPSHOT_MAX_ROWS,
+        )
+        if any(not row.get("stock_id") or row.get("date") != day.isoformat() for row in rows):
+            raise invalid_data()
+        meta.request_scope = "market_snapshot"
+        return rows, meta
+
     async def _request(
         self,
         dataset: str,
@@ -153,6 +180,9 @@ class FinMindService:
         start: date,
         end: date,
         url: str = SOURCE_URL,
+        *,
+        max_bytes: int | None = None,
+        max_rows: int | None = None,
     ) -> tuple[list[Row], FinMindMeta]:
         headers = {"Accept": "application/json", "Cache-Control": "no-cache"}
         if self._token:
@@ -173,7 +203,13 @@ class FinMindService:
                 content = bytearray()
                 async for chunk in response.aiter_bytes():
                     content.extend(chunk)
-                    if len(content) > MAX_BYTES:
+                    if len(content) > (MAX_BYTES if max_bytes is None else max_bytes):
+                        if max_bytes is not None:
+                            raise ServiceError(
+                                "FINMIND_SNAPSHOT_TOO_LARGE",
+                                "全市場快照超過大小限制，未使用不完整資料。",
+                                502,
+                            )
                         raise invalid_data()
                 if response.status_code != 200:
                     if response.status_code == 400:
@@ -186,7 +222,7 @@ class FinMindService:
                         ):
                             raise source_error(403)
                     raise source_error(response.status_code)
-            rows = decode_rows(bytes(content))
+            rows = decode_rows(bytes(content), max_rows=max_rows)
         except (httpx.HTTPError, TimeoutError) as error:
             # Source/proxy messages and request objects may contain credentials.
             raise source_error(503) from error

@@ -29,3 +29,9 @@ class RequestSource(FinMindService):
         result = await self.source.catalogue(dataset)
         await self.check()
         return result
+
+    async def snapshot(self, dataset: str, day: date) -> tuple[list[Row], FinMindMeta]:
+        await self.check()
+        result = await self.source.snapshot(dataset, day)
+        await self.check()
+        return result

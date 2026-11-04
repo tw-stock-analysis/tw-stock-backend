@@ -35,7 +35,7 @@
 
 ### 私人研究文件
 
-migration head 為 **`0005_workspace`**，新增唯一一張 `app.workspace_items`，`market` schema 仍無表。
+工作區表建立於 **`0005_workspace`**，目前 head 已升至 **`0006_security_identity`**，新增唯一一張 `app.workspace_items`，`market` schema 仍無表。
 
 | 文件 kind | 保存的使用者輸入 |
 | --- | --- |
@@ -77,3 +77,5 @@ migration head 為 **`0005_workspace`**，新增唯一一張 `app.workspace_item
 執行 `uv run alembic upgrade head` 後啟動 API；前端需搭配此分支。此新增表只保存使用者資料，應納入原有帳號資料備份。升版為新增表，既有 API 與資料表保持相容；不要對使用者資料庫任意 downgrade，降版會刪除工作區文件。
 
 自動測試涵蓋來源白名單、名錄缺日期／市場轉換／身分衝突、部分查詢、財報比率、成本損益、超賣、次日成交、費用與單位、企業行動防護、CSRF／body 限制、帳號隔離、競爭更新與上限。真實來源及瀏覽器驗證只保存狀態／筆數等摘要，不保存行情紀錄，見本次驗證 JSON。
+
+後續新增永久證券身分、全市場基本面掃描及多股再平衡回測，見 [進階研究](advanced-research-scope.md)；原有候選清單及單股 API 保持相容。
