@@ -12,6 +12,7 @@ from app.core.config import Settings, get_settings
 from app.core.login_limits import LoginRateLimiter
 from app.core.passwords import PasswordService
 from app.services.authentication import AuthenticationService
+from app.services.finmind import FinMindService
 from app.services.twse import TwseService
 
 
@@ -36,6 +37,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             async with httpx.AsyncClient(follow_redirects=False) as source_client:
                 app.state.twse_service = TwseService(source_client)
+                app.state.finmind_service = FinMindService(
+                    source_client, config.finmind_api_token.get_secret_value()
+                )
                 yield
         finally:
             await engine.dispose()

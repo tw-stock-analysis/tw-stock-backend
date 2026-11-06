@@ -1,0 +1,147 @@
+{
+  "contains_market_records": false,
+  "verified_on_taipei": "2026-11-04",
+  "backend": {
+    "tests_passed": 604,
+    "tests_skipped": 58,
+    "skip_reason": "Environment-dependent full gateway tests",
+    "ruff": "passed",
+    "mypy": "passed",
+    "migration_head": "0006_security_identity",
+    "alembic_check": "passed"
+  },
+  "frontend": {
+    "tests_passed": 182,
+    "typecheck": "passed",
+    "production_build": "passed"
+  },
+  "identity_import": {
+    "environment": "isolated disposable PostgreSQL17",
+    "source": "three fresh fixed official TWSE metadata endpoints, sequential requests",
+    "created": 1123,
+    "current_twse": 1099,
+    "paired_closed_histories": 24,
+    "skipped_missing_historical_dates": 377,
+    "skipped_unpaired_history": 2,
+    "complete_tpex_emerging_isin_history": false
+  },
+  "anonymous_source_check": {
+    "verified_at": "2026-11-04T06:47:52.342701+00:00",
+    "contains_market_records": false,
+    "cases": [
+      {
+        "case": "market_snapshot_anonymous_permission",
+        "status": "passed",
+        "http": 503,
+        "error_code": "FINMIND_ACCESS_DENIED",
+        "paid_success_verified": false
+      },
+      {
+        "case": "strict_uninitialized_registry_rejected",
+        "status": "passed",
+        "http": 422,
+        "error_code": "SECURITY_IDENTITY_UNKNOWN"
+      },
+      {
+        "case": "public_body_actual_bytes_bound",
+        "status": "passed",
+        "http": 413
+      }
+    ]
+  },
+  "live_api": {
+    "verified_at": "2026-11-04T06:50:40.922231+00:00",
+    "contains_market_records": false,
+    "topology": "FastAPI -> official TWSE identity metadata in isolated PostgreSQL and real anonymous FinMind",
+    "cases": [
+      {
+        "case": "official_metadata_stable_identity_lookup",
+        "status": "passed",
+        "http": 200
+      },
+      {
+        "case": "unknown_identity_before_documented_start",
+        "status": "passed",
+        "http": 200
+      },
+      {
+        "case": "stable_uuid_on_repeat_lookup",
+        "status": "passed"
+      },
+      {
+        "case": "real_source_strict_fixed_weights",
+        "status": "passed",
+        "equity_points": 55,
+        "order_count": 6,
+        "rebalance_count": 3,
+        "identity_verified": true
+      },
+      {
+        "case": "real_source_strict_momentum",
+        "status": "passed",
+        "equity_points": 55,
+        "order_count": 3,
+        "rebalance_count": 3,
+        "identity_verified": true
+      },
+      {
+        "case": "real_source_strict_low_volatility",
+        "status": "passed",
+        "equity_points": 55,
+        "order_count": 3,
+        "rebalance_count": 3,
+        "identity_verified": true
+      }
+    ]
+  },
+  "browser": {
+    "verified_at": "2026-11-04T06:53:00.909648+00:00",
+    "topology": "Chromium -> Vite same-origin proxy -> FastAPI -> isolated PostgreSQL official identity metadata and real anonymous FinMind",
+    "contains_market_records": false,
+    "javascript_errors": [],
+    "direct_browser_source_requests": 0,
+    "cases": [
+      {
+        "case": "official_identity_timeline_and_historical_source_link",
+        "status": "passed"
+      },
+      {
+        "case": "stable_permalink_reload_unknown_gap",
+        "status": "passed"
+      },
+      {
+        "case": "anonymous_full_market_permission_clear_no_fake_results",
+        "status": "passed"
+      },
+      {
+        "case": "real_fixed_rebalance_strict_identity_chart",
+        "status": "passed"
+      },
+      {
+        "case": "real_cross_stock_momentum_verified_warmup",
+        "status": "passed"
+      },
+      {
+        "case": "mobile_populated_portfolio_results",
+        "status": "passed",
+        "body_overflow": false
+      },
+      {
+        "case": "mobile_identity_search_detail_and_market_screen",
+        "status": "passed",
+        "body_overflow": false
+      }
+    ]
+  },
+  "scope": {
+    "reminders": "skipped by user",
+    "historical_identity": "durable IDs and verified intervals; unknown coverage preserved",
+    "market_scan": "whole-source snapshots; paid success not verified without entitled token",
+    "factor_backtest": "fixed user universe, momentum/low volatility, not financial PIT",
+    "source_requests": "sequential, explicit requests only",
+    "quote_database": false,
+    "quote_cache": false,
+    "pull_request": false,
+    "merge": false
+  }
+}

@@ -1,0 +1,205 @@
+{
+  "contains_market_records": false,
+  "api": {
+    "verified_at": "2026-10-24T10:48:13.326875+00:00",
+    "topology": "FastAPI ASGI routes -> anonymous real FinMind",
+    "database_calls": 0,
+    "contains_market_records": false,
+    "cases": [
+      {
+        "case": "detail_TWSE",
+        "http": 200,
+        "no_store": true,
+        "row_count": 18
+      },
+      {
+        "case": "detail_TPEX",
+        "http": 200,
+        "no_store": true,
+        "row_count": 18
+      },
+      {
+        "case": "detail_EMERGING",
+        "http": 200,
+        "no_store": true,
+        "row_count": 18
+      },
+      {
+        "case": "old_emerging_reference_empty_recent_prices",
+        "http": 200,
+        "no_store": true
+      },
+      {
+        "case": "delisted_catalogue",
+        "http": 200,
+        "no_store": true,
+        "total_references": 507
+      },
+      {
+        "case": "delisted_historical_lookup",
+        "http": 200,
+        "no_store": true,
+        "prices_status": "ok",
+        "row_count": 145
+      },
+      {
+        "case": "fundamental_and_institution_metrics",
+        "http": 200,
+        "no_store": true,
+        "candidate_statuses": [
+          {
+            "market": "TPEX",
+            "status": "ok",
+            "available_metrics": [
+              "revenue_yoy",
+              "gross_margin",
+              "operating_margin",
+              "debt_ratio",
+              "foreign_streak",
+              "trust_streak"
+            ]
+          },
+          {
+            "market": "TWSE",
+            "status": "ok",
+            "available_metrics": [
+              "revenue_yoy",
+              "gross_margin",
+              "operating_margin",
+              "debt_ratio",
+              "foreign_streak",
+              "trust_streak"
+            ]
+          }
+        ]
+      },
+      {
+        "case": "sma_next_open_backtest",
+        "http": 200,
+        "no_store": true,
+        "equity_points": 55,
+        "order_count": 2
+      },
+      {
+        "case": "anonymous_adjusted_backtest_permission",
+        "http": 503,
+        "no_store": true,
+        "error_code": "FINMIND_ACCESS_DENIED"
+      },
+      {
+        "case": "emerging_backtest_rejected",
+        "http": 422,
+        "no_store": true,
+        "error_code": "VALIDATION_ERROR"
+      }
+    ]
+  },
+  "browser": {
+    "verified_at": "2026-10-24T10:43:55.518651+00:00",
+    "topology": "Chromium -> local Vite proxy -> FastAPI -> anonymous FinMind and disposable PostgreSQL",
+    "contains_market_records": false,
+    "javascript_errors": [],
+    "browser_direct_finmind_requests": 0,
+    "cases": [
+      {
+        "case": "tpex_search_and_detail_real_source",
+        "status": "passed"
+      },
+      {
+        "case": "emerging_detail_real_source",
+        "status": "passed"
+      },
+      {
+        "case": "two_market_fundamental_screen_real_source",
+        "status": "passed"
+      },
+      {
+        "case": "next_open_sma_backtest_real_source",
+        "status": "passed"
+      },
+      {
+        "case": "private_note_save_reload",
+        "status": "passed"
+      },
+      {
+        "case": "saved_chart_preferences_applied",
+        "status": "passed"
+      },
+      {
+        "case": "manual_ledger_save_and_live_valuation",
+        "status": "passed"
+      },
+      {
+        "case": "mobile_layout_/instruments",
+        "status": "passed",
+        "body_overflow": false
+      },
+      {
+        "case": "mobile_layout_/research/factors",
+        "status": "passed",
+        "body_overflow": false
+      },
+      {
+        "case": "mobile_layout_/workspace",
+        "status": "passed",
+        "body_overflow": false
+      },
+      {
+        "case": "mobile_layout_/portfolio",
+        "status": "passed",
+        "body_overflow": false
+      },
+      {
+        "case": "mobile_layout_/research/backtest",
+        "status": "passed",
+        "body_overflow": false
+      },
+      {
+        "case": "logout_removes_private_ui",
+        "status": "passed"
+      }
+    ]
+  },
+  "workspace_browser": {
+    "verified_at": "2026-10-24T10:47:06.131595+00:00",
+    "contains_market_records": false,
+    "topology": "Chromium -> same-origin FastAPI -> disposable PostgreSQL and anonymous FinMind",
+    "javascript_errors": [],
+    "cases": [
+      {
+        "case": "save_and_rerun_screen",
+        "status": "passed"
+      },
+      {
+        "case": "named_two_market_comparison",
+        "status": "passed"
+      },
+      {
+        "case": "empty_chart_date_does_not_crash",
+        "status": "passed"
+      },
+      {
+        "case": "concurrent_tab_version_conflict_preserves_local_edit",
+        "status": "passed"
+      },
+      {
+        "case": "split_sell_costs_dividends_reconcile_through_ui_and_api",
+        "status": "passed"
+      }
+    ]
+  },
+  "validation": {
+    "postgresql": "isolated PostgreSQL 17, migration 0005_workspace; no market tables",
+    "frontend": "173 tests passed; typecheck and production build passed",
+    "paid_data": "Anonymous adjusted-price request correctly rejected with FINMIND_ACCESS_DENIED; paid success not verified",
+    "backend": "533 tests passed, 58 environment-dependent gateway tests skipped; ruff, mypy, migrations and alembic check passed"
+  },
+  "constraints": {
+    "reminders": "skipped by user",
+    "source_requests": "sequential, on explicit request",
+    "market_database": false,
+    "market_cache": false,
+    "pull_request": false,
+    "merge": false
+  }
+}

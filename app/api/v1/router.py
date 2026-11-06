@@ -1,6 +1,16 @@
 from fastapi import APIRouter
 
-from app.api.v1.endpoints import authentication, health, research, stocks, twse
+from app.api.v1.endpoints import (
+    authentication,
+    health,
+    instruments,
+    lab,
+    research,
+    security_identity,
+    stocks,
+    twse,
+    workspace,
+)
 from app.schemas.common import ErrorResponse
 
 router = APIRouter(
@@ -12,3 +22,8 @@ router.include_router(twse.router)
 router.include_router(stocks.router)
 router.include_router(research.router)
 router.include_router(authentication.router)
+router.include_router(instruments.router)
+router.include_router(workspace.router)
+router.include_router(lab.router)
+
+router.include_router(security_identity.router)

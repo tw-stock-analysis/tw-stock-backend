@@ -4,8 +4,12 @@ from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.session import get_session
+from app.services.advanced_research import AdvancedResearchService
+from app.services.finmind import FinMindService
 from app.services.notices import NoticeService
+from app.services.request_source import RequestSource
 from app.services.research import ResearchService
+from app.services.stock_analysis import StockAnalysisService
 from app.services.stocks import StockService
 from app.services.twse import TwseService
 
@@ -38,3 +42,39 @@ def get_notice_service(twse: TwseServiceDependency) -> NoticeService:
 
 
 NoticeServiceDependency = Annotated[NoticeService, Depends(get_notice_service)]
+
+
+def get_finmind_service(request: Request) -> FinMindService:
+    return request.app.state.finmind_service
+
+
+FinMindServiceDependency = Annotated[FinMindService, Depends(get_finmind_service)]
+
+
+def get_stock_analysis_service(
+    stocks: StockServiceDependency, finmind: FinMindServiceDependency
+) -> StockAnalysisService:
+    return StockAnalysisService(stocks, finmind)
+
+
+StockAnalysisServiceDependency = Annotated[
+    StockAnalysisService, Depends(get_stock_analysis_service)
+]
+
+
+def get_advanced_research_service(
+    stocks: StockServiceDependency, finmind: FinMindServiceDependency
+) -> AdvancedResearchService:
+    return AdvancedResearchService(stocks, finmind)
+
+
+AdvancedResearchServiceDependency = Annotated[
+    AdvancedResearchService, Depends(get_advanced_research_service)
+]
+
+
+def get_request_source(request: Request, source: FinMindServiceDependency) -> FinMindService:
+    return RequestSource(source, request.is_disconnected)
+
+
+RequestSourceDependency = Annotated[FinMindService, Depends(get_request_source)]

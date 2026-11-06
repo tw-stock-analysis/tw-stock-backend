@@ -1,8 +1,14 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 
-from app.api.deps import StockServiceDependency
+from app.api.deps import (
+    AdvancedResearchServiceDependency,
+    StockAnalysisServiceDependency,
+    StockServiceDependency,
+)
+from app.schemas.advanced_research import AdvancedQuery, AdvancedResponse
+from app.schemas.analysis import AnalysisQuery, StockAnalysisResponse
 from app.schemas.stocks import (
     StockCode,
     StockMarginResponse,
@@ -42,3 +48,27 @@ async def stock_margin(
     code: StockCode, query: Annotated[EmptyQuery, Query()], service: StockServiceDependency
 ) -> StockMarginResponse:
     return await service.margin(code)
+
+
+@router.get(
+    "/{code}/analysis",
+    response_model=StockAnalysisResponse,
+    summary="FinMind 歷史日線、月營收與法人分析",
+)
+async def stock_analysis(
+    code: StockCode,
+    request: Request,
+    query: Annotated[AnalysisQuery, Query()],
+    service: StockAnalysisServiceDependency,
+) -> StockAnalysisResponse:
+    return await service.analyse(code, query, request.is_disconnected)
+
+
+@router.get("/{code}/research", response_model=AdvancedResponse, summary="FinMind 進階個股研究")
+async def advanced_research(
+    code: StockCode,
+    request: Request,
+    query: Annotated[AdvancedQuery, Query()],
+    service: AdvancedResearchServiceDependency,
+) -> AdvancedResponse:
+    return await service.research(code, query, request.is_disconnected)

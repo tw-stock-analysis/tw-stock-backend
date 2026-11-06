@@ -22,6 +22,10 @@ async def transaction(factory: SessionFactory) -> AsyncIterator[AsyncSession]:
             yield session
     except IntegrityError as error:
         conflicts = {
+            "uq_workspace_items_user_kind_name": (
+                "WORKSPACE_NAME_EXISTS",
+                "同類型已有同名研究文件。",
+            ),
             "uq_users_active_email": ("EMAIL_IN_USE", "此 Email 已有未刪除的帳號。"),
             "uq_watchlists_user_id_name": ("WATCHLIST_NAME_EXISTS", "已有同名自選清單。"),
             "uq_watchlist_items_watchlist_id_position": ("POSITION_CONFLICT", "清單排序衝突。"),

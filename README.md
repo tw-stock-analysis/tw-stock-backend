@@ -69,7 +69,7 @@ curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
 
 ## 個股搜尋與詳情
 
-新增 4 個明確宣告的端點：`GET /api/v1/stocks`（q／page／limit）、`GET /api/v1/stocks/{code}`、`GET /api/v1/stocks/{code}/valuation`、`GET /api/v1/stocks/{code}/margin`。每次各自重新取得既有 TWSE 來源全集，在記憶體中搜尋或精確比對代碼，保留精確字串，不儲存或快取行情。連同下方研究工具，目前共有 **58 個公開端點、5 個認證端點，合計 63 個 API 路由**，不計 Swagger 文件頁。
+新增 4 個明確宣告的端點：`GET /api/v1/stocks`（q／page／limit）、`GET /api/v1/stocks/{code}`、`GET /api/v1/stocks/{code}/valuation`、`GET /api/v1/stocks/{code}/margin`。每次各自重新取得既有 TWSE 來源全集，在記憶體中搜尋或精確比對代碼，保留精確字串，不儲存或快取行情。連同下方研究工具與 FinMind 歷史研究，目前共有 **71 個公開端點、5 個認證端點、6 個工作區端點，合計 82 個 API 操作**，不計 Swagger 文件頁。
 
 前端 `/stocks` 可搜尋選股，`/stocks/{code}` 依序取得成交、估值與資券，分別標示日期、取得時間及失敗狀態；來源未提供的資券日期不自行補上。完整契約與 154 項整合驗收見 [個股研究 API](docs/stock-research-api.md)。
 
@@ -78,6 +78,14 @@ curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
 新增 `/api/v1/research/screener`、`/screener/export`、`/compare`、`/overview` 四個公開 GET 端點。支援股價／漲跌幅／成交量篩選、精確數值排序與分頁、完整結果 CSV、2～4 檔成交估值比較，以及同一最新交易日的漲跌分布與排行。每次重新取得 TWSE，維持逐次請求、不入庫、不快取，這輪不修改 ORM 或 migration。完整條件、計算、日期與失敗處理見 [公開研究工具](docs/research-tools.md)。
 
 另提供 `/api/v1/research/calendar`、`/calendar/export`、`/risks`：除權息與開休市事項的日期篩選／ICS 下載，以及注意、處置、暫停交易公告彙整。支援個股頁按次取得風險公告、各來源狀態與部分失敗處理，沒有公告不解讀為無風險。完整契約見 [日曆與官方風險公告](docs/calendar-and-risks.md)。
+
+## FinMind 歷史研究
+
+新增 `GET /api/v1/stocks/{code}/analysis`，依序取得日線、月營收及法人資料，提供 MA20／MA60、營收成長率及法人累計。前端從個股摘要進入 `/stocks/:code/history`。後端選用 `FINMIND_API_TOKEN`，不增加 SDK、行情表或快取；日期、單位、部分失敗與只讀驗證指令見 [FinMind 契約](docs/finmind-analysis.md)。已於 2026-10-24（台北）完成匿名真實來源與前後端串接驗證，結果見 [驗證紀錄](docs/finmind-verification.json)。
+
+同一歷史研究回應另提供 RSI14、MACD（12／26／9）、布林通道，以及年初累計／近 12 個月營收與年增率。前端切換視圖不新增來源請求；無公告成交價不以零元計算指標，營收缺月不補零。定義與暖機規則見上述契約，實測見 [指標與累計營收驗證](docs/finmind-indicators-verification.json)。
+
+另新增固定主題的 `GET /api/v1/stocks/{code}/research`，支援歷史估值、歷年股利、收盤填息、財報三表／EPS、還原股價、持股分級、券商分點與主動式 ETF 持股。匿名真實驗證已通過四項免費研究及付費拒絕流程；付費成功回應仍待具權限 Token 實測。來源、口徑與日期上限見 [進階研究契約](docs/finmind-advanced-research.md)。
 
 ## 帳號與自選股資料表（SQLAlchemy ORM）
 
@@ -116,7 +124,7 @@ Email／密碼登入採 `pwdlib` Argon2id，必須是已驗證 Email、active �
 
 本機前端預設使用 Vite `3007`，將相對路徑 `/api/*` 代理至 FastAPI `8000`；瀏覽器仍是同源請求。CSRF 來源預設包含 localhost／127.0.0.1 的 `3007` 與 Nginx `8080`。若既有 `.env` 已覆寫 `AUTH_ALLOWED_ORIGINS`，請同步加入實際的開發入口；這是來源檢查，不會啟用 CORS。
 
-登入限流為每程序每 IP 30 次／60 秒、每 Email 10 次／60 秒，另限制 Argon2 並行數。多 worker／replica 的總限流須由可信入口共用處理；應用程式只採用由可信代理整理後的 client IP。完整回應、錯誤、部署設定、測試與本機測試帳號建立方式見 [認證 API](docs/authentication-api.md)。本輪沿用五張資料表，migration head 仍為 `0004_account_rules`。
+登入限流為每程序每 IP 30 次／60 秒、每 Email 10 次／60 秒，另限制 Argon2 並行數。多 worker／replica 的總限流須由可信入口共用處理；應用程式只採用由可信代理整理後的 client IP。完整回應、錯誤、部署設定、測試與本機測試帳號建立方式見 [認證 API](docs/authentication-api.md)。認證沿用原表；研究工作區新增 `app.workspace_items`，目前共九張 app 表，migration head 為 `0006_security_identity`。
 
 ## Nginx 整站入口（Docker Compose）
 
@@ -172,3 +180,11 @@ docker compose logs web backend migrate
 ```
 
 整合測試使用實際 Nginx 與 FastAPI，驗證 SPA 子路由、API 前綴、404、靜態資產快取、公開來源及 query string 的代理行為。未設定 `GATEWAY_BASE_URL` 時略過這組測試，一般單元測試不需要啟動 Docker。
+
+## 多市場、私人研究與投資工具
+
+新增上市／上櫃／興櫃／下市櫃參考名錄、最多 10 檔營收／財報／法人候選選股、登入後的筆記／篩選條件／圖表偏好／命名比較、手動帳本估值，以及單一證券買入持有／均線回測。提醒通知先跳過。行情仍逐次查詢，不快取、不存行情；只有使用者輸入存入 PostgreSQL。升版請執行 `uv run alembic upgrade head`。流程、API、計算假設及歷史身分限制見 [研究工作區契約](docs/research-workspace.md)。
+
+## 證券身分與進階投資研究
+
+新增永久 UUID 證券登錄、具來源證據的歷史掛牌／代碼／ISIN 別名區間、全市場單期基本面掃描，以及 2–20 檔固定權重、動能／低波動因子及月／季再平衡回測。預設回測驗證交易期間與必要因子暖機的證券身分，缺價不補舊值。部署需升至 `0006_security_identity`，再按需執行官方身分 CLI 初始化。上櫃／興櫃完整歷史及 ISIN 仍須補充官方或授權證據；全市場快照需要 FinMind 相應權限，匿名成功資料尚未驗證。詳細範圍與限制見 [本輪契約](docs/advanced-research-scope.md)。

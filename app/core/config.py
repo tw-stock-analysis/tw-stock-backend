@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Literal
 from urllib.parse import urlsplit
 
-from pydantic import Field, model_validator
+from pydantic import Field, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine import URL, make_url
 
@@ -33,6 +33,7 @@ class Settings(BaseSettings):
         ]
     )
     password_max_concurrency: int = Field(default=2, ge=1, le=8)
+    finmind_api_token: SecretStr = Field(default_factory=lambda: SecretStr(""), repr=False)
 
     @model_validator(mode="after")
     def validate_auth_origins(self) -> "Settings":
