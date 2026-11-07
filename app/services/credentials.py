@@ -80,6 +80,39 @@ async def consume_verification(
     return user, now
 
 
+async def issue_verification(
+    session: AsyncSession,
+    user_id: UUID,
+    purpose: Purpose,
+    ttl: timedelta,
+    *,
+    created_ip: IpAddress = None,
+) -> IssuedCredential:
+    """Issue a replacement while the caller holds the user lock."""
+    now = await database_now(session)
+    await session.execute(
+        update(VerificationToken)
+        .where(
+            VerificationToken.user_id == user_id,
+            VerificationToken.purpose == purpose,
+            VerificationToken.consumed_at.is_(None),
+            VerificationToken.revoked_at.is_(None),
+        )
+        .values(revoked_at=now)
+    )
+    value = secrets.token_urlsafe(32)
+    record = VerificationToken(
+        user_id=user_id,
+        purpose=purpose,
+        token_hash=digest_token(value),
+        expires_at=now + ttl,
+        created_ip=created_ip,
+    )
+    session.add(record)
+    await session.flush()
+    return IssuedCredential(record.id, record.expires_at, value)
+
+
 class VerificationService:
     def __init__(self, factory: SessionFactory):
         self.factory = factory
@@ -97,29 +130,7 @@ class VerificationService:
             user = await require_user(session, user_id, lock=True, statuses=statuses)
             if purpose == "verify_email" and user.email_verified_at is not None:
                 raise ServiceError("EMAIL_ALREADY_VERIFIED", "Email 已完成驗證。", 409)
-            now = await database_now(session)
-            await session.execute(
-                update(VerificationToken)
-                .where(
-                    VerificationToken.user_id == user_id,
-                    VerificationToken.purpose == purpose,
-                    VerificationToken.consumed_at.is_(None),
-                    VerificationToken.revoked_at.is_(None),
-                )
-                .values(revoked_at=now)
-            )
-            value = secrets.token_urlsafe(32)
-            record = VerificationToken(
-                user_id=user_id,
-                purpose=purpose,
-                token_hash=digest_token(value),
-                expires_at=now + ttl,
-                created_ip=created_ip,
-            )
-            session.add(record)
-            await session.flush()
-            result = IssuedCredential(record.id, record.expires_at, value)
-        return result
+            return await issue_verification(session, user_id, purpose, ttl, created_ip=created_ip)
 
 
 class SessionService:

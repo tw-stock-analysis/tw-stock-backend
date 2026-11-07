@@ -11,8 +11,10 @@ from app.api.v1.router import router as v1_router
 from app.core.config import Settings, get_settings
 from app.core.login_limits import LoginRateLimiter
 from app.core.passwords import PasswordService
+from app.services.accounts import AccountService
 from app.services.authentication import AuthenticationService
 from app.services.finmind import FinMindService
+from app.services.registration import RegistrationService
 from app.services.twse import TwseService
 
 
@@ -30,9 +32,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             connect_args={"timeout": 3, "command_timeout": 3},
         )
         app.state.session_factory = async_sessionmaker(engine, expire_on_commit=False)
+        passwords = PasswordService(max_concurrency=config.password_max_concurrency)
         app.state.authentication_service = AuthenticationService(
-            app.state.session_factory,
-            PasswordService(max_concurrency=config.password_max_concurrency),
+            app.state.session_factory, passwords
+        )
+        app.state.registration_service = RegistrationService(
+            AccountService(app.state.session_factory), passwords, config
         )
         try:
             async with httpx.AsyncClient(follow_redirects=False) as source_client:
@@ -54,6 +59,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
     app.state.settings = config
     app.state.login_limiter = LoginRateLimiter()
+    app.state.registration_limiter = LoginRateLimiter(ip_limit=10, email_limit=1)
     app.add_middleware(AuthSecurityMiddleware, settings=config)
 
     @app.middleware("http")

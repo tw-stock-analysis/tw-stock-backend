@@ -69,7 +69,7 @@ curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
 
 ## 個股搜尋與詳情
 
-新增 4 個明確宣告的端點：`GET /api/v1/stocks`（q／page／limit）、`GET /api/v1/stocks/{code}`、`GET /api/v1/stocks/{code}/valuation`、`GET /api/v1/stocks/{code}/margin`。每次各自重新取得既有 TWSE 來源全集，在記憶體中搜尋或精確比對代碼，保留精確字串，不儲存或快取行情。連同下方研究工具與 FinMind 歷史研究，目前共有 **71 個公開端點、5 個認證端點、6 個工作區端點，合計 82 個 API 操作**，不計 Swagger 文件頁。
+新增 4 個明確宣告的端點：`GET /api/v1/stocks`（q／page／limit）、`GET /api/v1/stocks/{code}`、`GET /api/v1/stocks/{code}/valuation`、`GET /api/v1/stocks/{code}/margin`。每次各自重新取得既有 TWSE 來源全集，在記憶體中搜尋或精確比對代碼，保留精確字串，不儲存或快取行情。完整端點見 [API 契約](docs/api-contract.md)。
 
 前端 `/stocks` 可搜尋選股，`/stocks/{code}` 依序取得成交、估值與資券，分別標示日期、取得時間及失敗狀態；來源未提供的資券日期不自行補上。完整契約與 154 項整合驗收見 [個股研究 API](docs/stock-research-api.md)。
 
@@ -89,7 +89,7 @@ curl 'http://localhost:8000/api/v1/twse/exchangeReport/STOCK_DAY_ALL'
 
 ## 帳號與自選股資料表（SQLAlchemy ORM）
 
-已建立 `app.users`、`app.auth_sessions`、`app.verification_tokens` 三張帳號表的 SQLAlchemy 2 ORM 模型及 Alembic migration，支援 Email 唯一性、一對多裝置 Session 與驗證 Token 欄位。後端登入、Cookie 驗證與裝置管理已接上；前端已接上登入／登出與裝置管理；公開註冊及寄信留待後續實作。TWSE 行情維持逐次請求、不入庫、不快取。
+`app.users`、`app.auth_sessions`、`app.verification_tokens` 支援帳號註冊、Email 驗證、Cookie 登入／登出與裝置管理。註冊寄信或本機開發收件匣請依 [認證 API](docs/authentication-api.md) 設定；忘記密碼尚未開放。
 
 另新增 `app.watchlists`、`app.watchlist_items`：每人最多 10 份清單、每份最多 100 檔，清單名稱不分大小寫唯一，股票不重複、排序於 commit 時唯一。已補上服務層的歸屬檢查、即時 TWSE 驗證、並發保護、軟刪除撤銷憑證與一次性 Token 消耗；自選清單 API 與前端尚未串接。
 
@@ -120,7 +120,7 @@ Email／密碼登入採 `pwdlib` Argon2id，必須是已驗證 Email、active �
 | `GET /api/v1/me/sessions` | 列出自己的有效登入裝置 |
 | `POST /api/v1/me/sessions/revoke-others` | 保留目前裝置、撤銷其他 Session，回 204 |
 
-三個 POST 皆要求 `Origin` 精確符合 `AUTH_ALLOWED_ORIGINS`、`X-CSRF-Protection: 1` 與 `Content-Type: application/json`；登出及登出其他裝置不接受 body。採同源 Nginx 入口，未開放跨來源 Cookie CORS。正式環境需明確設定 HTTPS origins，使用 `__Host-session; Secure; HttpOnly; SameSite=Lax; Path=/`，不設 Domain；本機開發使用 `session` Cookie。
+認證 POST 皆要求 `Origin` 精確符合 `AUTH_ALLOWED_ORIGINS`、`X-CSRF-Protection: 1` 與 `Content-Type: application/json`；登出及登出其他裝置不接受 body。採同源 Nginx 入口，未開放跨來源 Cookie CORS。正式環境需明確設定 HTTPS origins，使用 `__Host-session; Secure; HttpOnly; SameSite=Lax; Path=/`，不設 Domain；本機開發使用 `session` Cookie。
 
 本機前端預設使用 Vite `3007`，將相對路徑 `/api/*` 代理至 FastAPI `8000`；瀏覽器仍是同源請求。CSRF 來源預設包含 localhost／127.0.0.1 的 `3007` 與 Nginx `8080`。若既有 `.env` 已覆寫 `AUTH_ALLOWED_ORIGINS`，請同步加入實際的開發入口；這是來源檢查，不會啟用 CORS。
 
