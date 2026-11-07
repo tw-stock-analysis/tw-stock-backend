@@ -1,6 +1,10 @@
 """Trusted account writes with hashes prepared outside the database transaction."""
 
+from datetime import timedelta
 from uuid import UUID
+
+from sqlalchemy import func, select
+from sqlalchemy.dialects.postgresql import insert
 
 from app.models import User
 from app.services.account_state import (
@@ -10,7 +14,12 @@ from app.services.account_state import (
     revoke_credentials,
     transaction,
 )
-from app.services.credentials import consume_verification
+from app.services.credentials import (
+    IssuedCredential,
+    consume_verification,
+    invalid_token,
+    issue_verification,
+)
 from app.services.errors import ServiceError
 
 
@@ -53,9 +62,34 @@ class AccountService:
                 user.updated_at = now
             await revoke_credentials(session, user_id, now)
 
-    async def verify_email(self, token: str) -> None:
+    async def registration_code(self, email: str) -> IssuedCredential | None:
+        async with transaction(self.factory) as session:
+            await session.execute(
+                insert(User)
+                .values(email=email, password_hash="!unusable-until-verified")
+                .on_conflict_do_nothing(
+                    index_elements=[func.lower(User.email)], index_where=User.deleted_at.is_(None)
+                )
+            )
+            user = await session.scalar(
+                select(User).where(User.email == email, User.deleted_at.is_(None)).with_for_update()
+            )
+            if user is None or user.status != "pending_verification" or user.email_verified_at:
+                return None
+            return await issue_verification(session, user.id, "verify_email", timedelta(minutes=30))
+
+    async def verify_email(
+        self, token: str, *, password_hash: str | None = None, display_name: str | None = None
+    ) -> None:
+        if password_hash is not None:
+            require_password_hash(password_hash)
         async with transaction(self.factory) as session:
             user, now = await consume_verification(session, token, "verify_email")
+            if password_hash is not None:
+                if user.status != "pending_verification" or user.email_verified_at is not None:
+                    raise invalid_token()
+                user.password_hash = password_hash
+                user.display_name = display_name
             user.email_verified_at = now
             user.status = "active"
             user.updated_at = now

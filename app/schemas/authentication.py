@@ -1,4 +1,7 @@
+import re
 from datetime import datetime
+from email.errors import HeaderParseError
+from email.headerregistry import Address
 from typing import Literal
 from uuid import UUID
 
@@ -7,9 +10,8 @@ from pydantic import Field, SecretStr, field_validator
 from app.schemas.common import APIModel
 
 
-class LoginRequest(APIModel):
+class EmailRequest(APIModel):
     email: str = Field(min_length=1, max_length=254)
-    password: SecretStr = Field(min_length=1, max_length=1024)
 
     @field_validator("email")
     @classmethod
@@ -25,6 +27,10 @@ class LoginRequest(APIModel):
             raise ValueError("Email must be valid UTF-8") from error
         return normalized
 
+
+class PasswordRequest(APIModel):
+    password: SecretStr = Field(min_length=1, max_length=1024)
+
     @field_validator("password")
     @classmethod
     def limit_password_bytes(cls, value: SecretStr) -> SecretStr:
@@ -35,6 +41,54 @@ class LoginRequest(APIModel):
         if size > 1024:
             raise ValueError("Password must fit within 1024 UTF-8 bytes")
         return value
+
+
+class LoginRequest(EmailRequest, PasswordRequest):
+    pass
+
+
+class RegisterRequest(EmailRequest):
+    @field_validator("email")
+    @classmethod
+    def validate_address(cls, value: str) -> str:
+        try:
+            address = Address(addr_spec=value)
+        except (ValueError, HeaderParseError) as error:
+            raise ValueError("Email 格式不正確。") from error
+        if (
+            not value.isascii()
+            or address.addr_spec != value
+            or not 1 <= len(address.username) <= 64
+            or not re.fullmatch(
+                r"(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?",
+                address.domain,
+            )
+        ):
+            raise ValueError("Email 格式不正確。")
+        return value
+
+
+class VerifyRegistrationRequest(PasswordRequest):
+    token: SecretStr = Field(min_length=43, max_length=43)
+    password: SecretStr = Field(min_length=12, max_length=1024)
+    display_name: str | None = Field(default=None, max_length=100)
+
+    @field_validator("token")
+    @classmethod
+    def validate_token(cls, value: SecretStr) -> SecretStr:
+        if not re.fullmatch(r"[A-Za-z0-9_-]{43}", value.get_secret_value()):
+            raise ValueError("驗證碼格式不正確。")
+        return value
+
+    @field_validator("display_name")
+    @classmethod
+    def clean_display_name(cls, value: str | None) -> str | None:
+        if value is None:
+            return None
+        value.encode("utf-8")
+        if any(ord(char) < 32 or ord(char) == 127 for char in value):
+            raise ValueError("顯示名稱不可包含控制字元。")
+        return value.strip() or None
 
 
 class UserResponse(APIModel):

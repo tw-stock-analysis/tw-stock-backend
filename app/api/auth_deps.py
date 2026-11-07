@@ -5,6 +5,7 @@ from fastapi.security import APIKeyCookie
 
 from app.services.authentication import AuthenticationService, CurrentSession
 from app.services.errors import ServiceError
+from app.services.registration import RegistrationService
 
 
 class SessionCookie(APIKeyCookie):
@@ -26,6 +27,13 @@ def get_authentication_service(request: Request) -> AuthenticationService:
 AuthenticationServiceDependency = Annotated[
     AuthenticationService, Depends(get_authentication_service)
 ]
+
+
+def get_registration_service(request: Request) -> RegistrationService:
+    return request.app.state.registration_service
+
+
+RegistrationServiceDependency = Annotated[RegistrationService, Depends(get_registration_service)]
 
 
 async def get_current_session(

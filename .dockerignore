@@ -16,5 +16,6 @@ docs
 *.log
 *.dump
 backups
+.auth-mail
 deploy/tls
 .deploy.lock

@@ -33,10 +33,18 @@ class Settings(BaseSettings):
         ]
     )
     password_max_concurrency: int = Field(default=2, ge=1, le=8)
+    auth_mail_outbox: bool = False
+    auth_smtp_host: str = ""
+    auth_smtp_port: int = Field(default=465, ge=1, le=65535)
+    auth_smtp_from: str = ""
+    auth_smtp_user: str = ""
+    auth_smtp_password: SecretStr = Field(default_factory=lambda: SecretStr(""), repr=False)
     finmind_api_token: SecretStr = Field(default_factory=lambda: SecretStr(""), repr=False)
 
     @model_validator(mode="after")
     def validate_auth_origins(self) -> "Settings":
+        if self.auth_mail_outbox and self.app_env != "development":
+            raise ValueError("AUTH_MAIL_OUTBOX is only available in development")
         if not self.auth_allowed_origins:
             raise ValueError("AUTH_ALLOWED_ORIGINS must contain an explicit browser origin")
         for origin in self.auth_allowed_origins:

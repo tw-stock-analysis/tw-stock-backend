@@ -1,18 +1,21 @@
 from ipaddress import ip_address
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, BackgroundTasks, Request, Response
 
 from app.api.auth_deps import (
     AuthenticationServiceDependency,
     CurrentSessionDependency,
+    RegistrationServiceDependency,
     SessionCookieDependency,
 )
 from app.schemas.authentication import (
     LoginRequest,
     LoginResponse,
+    RegisterRequest,
     SessionResponse,
     SessionsResponse,
     UserResponse,
+    VerifyRegistrationRequest,
 )
 from app.schemas.common import ErrorResponse
 
@@ -34,6 +37,41 @@ BROWSER_WRITE_SCHEMA = {
         }
     ]
 }
+
+
+@router.post(
+    "/auth/register",
+    status_code=202,
+    summary="要求註冊 Email 驗證碼",
+    openapi_extra=BROWSER_WRITE_SCHEMA,
+)
+async def register(
+    body: RegisterRequest,
+    request: Request,
+    tasks: BackgroundTasks,
+    service: RegistrationServiceDependency,
+) -> Response:
+    service.require_delivery()
+    request.app.state.registration_limiter.check_email(body.email)
+    # The response does not reveal whether the address already has an account.
+    tasks.add_task(service.send_code, body.email)
+    return Response(status_code=202)
+
+
+@router.post(
+    "/auth/verify-email",
+    status_code=204,
+    summary="消耗驗證碼並啟用帳號",
+    responses={400: {"model": ErrorResponse}},
+    openapi_extra=BROWSER_WRITE_SCHEMA,
+)
+async def verify_email(
+    body: VerifyRegistrationRequest, service: RegistrationServiceDependency
+) -> Response:
+    await service.verify(
+        body.token.get_secret_value(), body.password.get_secret_value(), body.display_name
+    )
+    return Response(status_code=204)
 
 
 @router.post(

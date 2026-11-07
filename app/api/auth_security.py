@@ -8,13 +8,9 @@ from app.api.exception_handlers import error_response
 from app.core.config import Settings
 from app.services.errors import ServiceError
 
-AUTH_MUTATIONS = frozenset(
-    (
-        "/api/v1/auth/login",
-        "/api/v1/auth/logout",
-        "/api/v1/me/sessions/revoke-others",
-    )
-)
+BODYLESS_AUTH_MUTATIONS = frozenset(("/api/v1/auth/logout", "/api/v1/me/sessions/revoke-others"))
+REGISTRATION_MUTATIONS = frozenset(("/api/v1/auth/register", "/api/v1/auth/verify-email"))
+AUTH_MUTATIONS = BODYLESS_AUTH_MUTATIONS | REGISTRATION_MUTATIONS | {"/api/v1/auth/login"}
 MAX_AUTH_BODY_BYTES = 16_384
 
 
@@ -67,11 +63,16 @@ class AuthSecurityMiddleware:
             )
             return
 
-        if path == "/api/v1/auth/login":
+        if path == "/api/v1/auth/login" or path in REGISTRATION_MUTATIONS:
             # Trust only the ASGI peer, already normalized by a configured trusted proxy.
             peer = request.client.host if request.client else "unknown"
             try:
-                request.app.state.login_limiter.check_ip(peer)
+                limiter = (
+                    request.app.state.registration_limiter
+                    if path in REGISTRATION_MUTATIONS
+                    else request.app.state.login_limiter
+                )
+                limiter.check_ip(peer)
             except ServiceError as error:
                 response = error_response(request, error.status_code, error.code, error.message)
                 if error.status_code == 429:
@@ -94,7 +95,7 @@ class AuthSecurityMiddleware:
             body.extend(chunk)
             if not message.get("more_body", False):
                 break
-        if auth_mutation and path != "/api/v1/auth/login" and body:
+        if auth_mutation and path in BODYLESS_AUTH_MUTATIONS and body:
             await error_response(request, 422, "BODY_NOT_ALLOWED", "此操作不接受 request body。")(
                 scope, receive, send
             )

@@ -17,6 +17,7 @@ htmlcov/
 *.log
 *.dump
 backups/
+.auth-mail/
 deploy/tls/
 .deploy.lock
 .DS_Store

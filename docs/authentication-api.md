@@ -1,8 +1,17 @@
 # 後端登入與 Token 驗證
 
-本版提供 Email／密碼登入、目前使用者、登出及多裝置管理。Session 固定有效 7 天，到期重新登入。前端已提供登入／登出與裝置管理畫面；公開註冊、寄信及忘記密碼 HTTP 流程另行實作；目前的驗證信箱／重設密碼能力仍是可信內部服務。
+本版提供 Email 註冊與驗證、密碼登入、目前使用者、登出及多裝置管理。Session 固定有效 7 天，到期重新登入。忘記密碼 HTTP 流程仍未開放。
 
-新增 5 個認證端點，加上既有 51 個公開端點，共 56 個 API 路由。沿用 `users`、`auth_sessions`、`verification_tokens`、`watchlists`、`watchlist_items` 五張表，migration head 仍為 `0004_account_rules`。TWSE 查詢維持逐次請求、不存行情資料、不快取，也不因收到 Cookie 而查詢認證資料庫。
+七個認證端點沿用 `users`、`auth_sessions`、`verification_tokens`，不新增 migration。TWSE 查詢維持逐次請求，也不因收到 Cookie 而查詢認證資料庫。
+
+## 註冊與驗證信箱
+
+1. 在 `/register` 輸入 Email。`POST /api/v1/auth/register` 只接受 `email`，正規化後建立待驗證帳號並安排寄送驗證碼。已存在的啟用或停用帳號同樣回空的 `202`，不寄信、不變更帳號。待驗證帳號可重新索取，新碼會撤銷舊碼。
+2. 在同一頁貼上驗證碼並設定密碼及選填顯示名稱。`POST /api/v1/auth/verify-email` 接受 `token`、`password`、`display_name`（可省略）。密碼至少 12 個字元，最多 1024 UTF-8 bytes。成功以同一交易消耗 Token、寫入 Argon2id 密碼雜湊及啟用帳號，回 `204`，接著可登入。無效、過期或已使用的碼回 `400 TOKEN_INVALID`。
+
+驗證碼 30 分鐘內有效，資料庫只存 SHA-256 digest。每程序兩個註冊端點合計每 IP 每分鐘 10 次，索取驗證碼另限每個 Email 每分鐘 1 次。`202` 代表已接受處理；寄信失敗時可以稍後重試。多程序部署需在可信入口加上共享限流。
+
+本機開發可在後端 `.env` 設 `AUTH_MAIL_OUTBOX=true`，重啟後端後從 `backend/.auth-mail/` 最新的 `.eml` 取得驗證碼。這是開發收件匣，不會寄到外部，也無 HTTP 入口；使用完可清理郵件。正式部署設定 `AUTH_SMTP_HOST`、`AUTH_SMTP_FROM`、`AUTH_SMTP_PORT`（預設 465，隱式 TLS），若 SMTP 要求驗證再設定 `AUTH_SMTP_USER` 和 `AUTH_SMTP_PASSWORD`。未設定寄信方式時，索取驗證碼回 `503 REGISTRATION_UNAVAILABLE`。
 
 ## 認證流程與儲存
 
@@ -14,7 +23,7 @@
 
 密碼重設與軟刪除使用同一使用者鎖，因此在舊密碼比對期間發生的重設／刪除，不會在撤銷完成後產生新的有效登入。裝置查詢與撤銷也會在交易中重新確認目前 Session。驗證信箱／重設密碼 Token 的用途及資料表與 Session 分開，不能用來登入。
 
-Argon2 工作在 event loop 外執行，每個後端程序預設最多 2 個同時執行，超量回 503，不建立無限等待隊列。建議參數每個工作約需 64 MiB 記憶體。`PasswordService.hash()` 可供可信帳號建立／改密碼流程使用；目前只限制 1–1024 UTF-8 bytes，尚未定義公開註冊的密碼強度政策。
+Argon2 工作在 event loop 外執行，每個後端程序預設最多 2 個同時執行，超量回 503，不建立無限等待隊列。建議參數每個工作約需 64 MiB 記憶體。登入與註冊共用此限制。
 
 ## Cookie、來源與 CSRF
 
@@ -25,7 +34,7 @@ Argon2 工作在 event loop 外執行，每個後端程序預設最多 2 個同�
 
 登入設定 `Max-Age=604800` 與到期時間；伺服器的期限與撤銷狀態仍是最終依據。瀏覽器自動附帶 Cookie，JavaScript 不讀取或保存 Token。登出會撤銷 DB Session 並清除相同名稱／路徑的 Cookie。
 
-三個 POST 端點（登入、登出、登出其他裝置）在解析 body 前檢查：
+認證 POST 端點在解析 body 前檢查：
 
 - 只能有一個 `Origin`，且完整字串符合 `AUTH_ALLOWED_ORIGINS` 中的值。缺少、`null`、不同子網域、附加網域或重複值都拒絕；不以 `Host` 或 Referer 代替。
 - 必須有且只有一個 `X-CSRF-Protection: 1`。它是瀏覽器跨來源防護的自訂 header，不是登入憑證，也不是秘密 Token。
@@ -42,6 +51,8 @@ Argon2 工作在 event loop 外執行，每個後端程序預設最多 2 個同�
 
 | 方法／路徑 | 輸入 | 成功回應 |
 | --- | --- | --- |
+| `POST /auth/register` | JSON `email` | 202 空 body；接受驗證碼寄送請求 |
+| `POST /auth/verify-email` | JSON `token`、`password`、選填 `display_name` | 204 空 body；啟用帳號 |
 | `POST /auth/login` | JSON `email`、`password`，不接受其他欄位 | 200 `{user, expires_at}`，設定 Cookie |
 | `GET /me` | 有效 Cookie | 200 使用者物件 |
 | `POST /auth/logout` | Cookie 可有可無，沒有 body | 204 空 body，清除 Cookie；重複執行安全 |
@@ -161,7 +172,7 @@ production 會拒絕空的 origins、非 HTTPS origins、萬用字元及含路�
 
 ## 本機建立可登入的測試帳號
 
-目前沒有公開註冊／驗證信件入口。可由有權操作**獨立開發資料庫**的人員執行以下可信腳本，建立帳號並直接消耗內部驗證 Token。這只用來準備本機測試資料，不代表完成真實信箱所有權驗證，也不能作為正式註冊流程。
+除了透過註冊頁，也可由有權操作**獨立開發資料庫**的人員執行以下可信腳本，建立帳號並直接消耗內部驗證 Token。這只用來準備本機測試資料，不能作為正式註冊流程。
 
 先在後端目錄設定開發 DB 並執行 `uv run alembic upgrade head`。將下例存成 `/tmp/provision_local_user.py`，再執行 `uv run python /tmp/provision_local_user.py`；密碼以 `getpass` 輸入，不放在 shell 指令或版本控制中：
 
@@ -204,7 +215,7 @@ async def main():
 asyncio.run(main())
 ```
 
-腳本只輸出 user_id，不輸出密碼、hash 或驗證 Token。5 分鐘只是本機腳本的臨時 Token 期限，不是尚待設計的正式驗證信件政策。同一 Email 已有未刪除帳號時會失敗；不要直接覆寫既有使用者的密碼或驗證狀態。
+腳本只輸出 user_id，不輸出密碼、hash 或驗證 Token。5 分鐘是本機腳本的臨時期限。相同 Email 已有未刪除帳號時會失敗；不要直接覆寫既有使用者的密碼或驗證狀態。
 
 ## 驗證與相關文件
 

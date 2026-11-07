@@ -1,6 +1,6 @@
 # 帳號與自選清單服務
 
-五張 `app` 表由 SQLAlchemy ORM 操作，Alembic 最新版為 `0004_account_rules`。帳號與清單服務已接續新增 [認證 API](authentication-api.md)，目前為 51 個公開路由加 5 個認證路由，共 56 個。認證沿用既有表；自選清單 HTTP API、股票主檔與行情儲存未加入。完整欄位與約束見 [ER 圖](database-er.md)。
+帳號與清單沿用五張 `app` 表，透過 SQLAlchemy ORM 操作。註冊、驗證與登入已接上[認證 API](authentication-api.md)；自選清單 HTTP API 尚未加入。完整欄位與約束見 [ER 圖](database-er.md)。
 
 ## 已確認的規則
 
@@ -37,9 +37,9 @@
 | `WatchlistService` | `create`、`list`、`get`、`rename`、`delete` | 檢查帳號與清單歸屬、名稱唯一及清單容量 |
 | | `add_item`、`remove_item`、`reorder` | 新增前即時驗證來源；保護容量、排序及父清單更新時間 |
 
-`AccountService` 的 `password_hash` 必須由可信的 `PasswordService.hash()` 預先產生完整 Argon2id 編碼結果；內部寫入方法仍只檢查前綴，不能接受 HTTP 使用者自行提供的 hash。HTTP 登入入口已實作密碼比對；尚未提供公開註冊、完整信箱格式驗證或註冊密碼強度政策。昂貴的雜湊計算在交易之外完成。
-`SessionService` 保留為較低層的內部憑證服務，其 `issue()` 本身不驗證密碼。HTTP 流程使用 `AuthenticationService`，將登入與鎖內 hash 重查整合，且額外要求已驗證 Email；不能把低層 `issue(user_id, ...)` 直接暴露為登入 API。Cookie／CSRF 規則見 [認證 API](authentication-api.md)，寄信、公開驗證與重設入口留待後續。
-低層 `SessionService`／`VerificationService` 的 `ttl` 仍由可信呼叫端明確給正值；HTTP Session 已固定為 7 天，驗證連結的正式期限尚待註冊／寄信流程確認。清理的 30 天不是登入有效期。
+`AccountService` 的 `password_hash` 必須由可信的 `PasswordService.hash()` 預先產生完整 Argon2id 編碼結果，不能接受 HTTP 呼叫端提供的 hash。註冊待驗證帳號尚無可用密碼；公開驗證會在同一交易消耗驗證碼、寫入已算好的密碼雜湊並啟用帳號。雜湊計算在交易之外完成。
+`SessionService.issue()` 本身不驗證密碼。HTTP 登入使用 `AuthenticationService`，將密碼比對與鎖內 hash 重查整合，並要求已驗證 Email；不能把低層 `issue(user_id, ...)` 直接暴露為登入 API。Cookie／CSRF 規則見 [認證 API](authentication-api.md)。
+HTTP Session 固定 7 天，註冊驗證碼有效 30 分鐘；其他低層呼叫仍須明確提供正值 `ttl`。
 憑證原文只在 `IssuedCredential.value` 提供，排除於 repr，資料庫及清理輸出沒有原文，不應將回傳物件轉成一般日誌。
 
 ## 交易與並發
