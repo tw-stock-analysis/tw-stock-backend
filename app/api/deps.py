@@ -37,8 +37,8 @@ def get_research_service(twse: TwseServiceDependency) -> ResearchService:
 ResearchServiceDependency = Annotated[ResearchService, Depends(get_research_service)]
 
 
-def get_notice_service(twse: TwseServiceDependency) -> NoticeService:
-    return NoticeService(twse)
+def get_notice_service(request: Request, twse: TwseServiceDependency) -> NoticeService:
+    return NoticeService(twse, request.is_disconnected)
 
 
 NoticeServiceDependency = Annotated[NoticeService, Depends(get_notice_service)]

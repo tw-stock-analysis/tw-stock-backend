@@ -4,6 +4,7 @@ import asyncio
 import hashlib
 import json
 import re
+from collections.abc import Awaitable, Callable
 from datetime import UTC, date, datetime, timedelta
 from html.parser import HTMLParser
 
@@ -267,8 +268,15 @@ def render_calendar(events: list[CalendarEvent]) -> str:
 
 
 class NoticeService:
-    def __init__(self, twse: TwseService):
+    def __init__(
+        self, twse: TwseService, disconnected: Callable[[], Awaitable[bool]] | None = None
+    ):
         self.twse = twse
+        self.disconnected = disconnected
+
+    async def check_connection(self):
+        if self.disconnected is not None and await self.disconnected():
+            raise ServiceError("REQUEST_CANCELLED", "查詢已取消。", 499)
 
     async def fetch_sources(
         self, keys: list[str], *, calendar: bool
@@ -277,10 +285,12 @@ class NoticeService:
         calendar_items: list[CalendarEvent] = []
         risk_items: list[RiskNotice] = []
         for key in keys:
+            await self.check_connection()
             dataset = BY_ID[key]
             try:
                 async with asyncio.timeout(SOURCE_TIMEOUT):
                     result = await self.twse.fetch(dataset)
+                await self.check_connection()
                 if calendar:
                     normalized_events = calendar_events(key, result.data)
                     calendar_items.extend(normalized_events)
@@ -300,6 +310,8 @@ class NoticeService:
                     )
                 )
             except (ServiceError, TimeoutError) as error:
+                if isinstance(error, ServiceError) and error.code == "REQUEST_CANCELLED":
+                    raise
                 sources.append(
                     NoticeSource(
                         id=key,

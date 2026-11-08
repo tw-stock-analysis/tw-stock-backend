@@ -208,7 +208,7 @@ def test_openapi_keeps_public_market_endpoints_explicit_typed_and_unauthenticate
             )
         )
     }
-    assert len(public_paths) == 71  # Existing public routes plus fixed-topic FinMind research.
+    assert len(public_paths) == 72  # Existing public routes plus fixed-topic FinMind research.
     assert not schema.get("security")
     for operations in public_paths.values():
         for operation in operations.values():

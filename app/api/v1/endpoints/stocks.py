@@ -4,11 +4,14 @@ from fastapi import APIRouter, Query, Request
 
 from app.api.deps import (
     AdvancedResearchServiceDependency,
+    NoticeServiceDependency,
+    RequestSourceDependency,
     StockAnalysisServiceDependency,
     StockServiceDependency,
 )
 from app.schemas.advanced_research import AdvancedQuery, AdvancedResponse
 from app.schemas.analysis import AnalysisQuery, StockAnalysisResponse
+from app.schemas.company_study import CompanyStudy, StudyQuery
 from app.schemas.stocks import (
     StockCode,
     StockMarginResponse,
@@ -18,6 +21,7 @@ from app.schemas.stocks import (
     StockValuationResponse,
 )
 from app.schemas.twse import EmptyQuery
+from app.services.company_study import CompanyStudyService
 
 router = APIRouter(prefix="/stocks", tags=["stocks"])
 
@@ -72,3 +76,17 @@ async def advanced_research(
     service: AdvancedResearchServiceDependency,
 ) -> AdvancedResponse:
     return await service.research(code, query, request.is_disconnected)
+
+
+@router.get("/{code}/study", response_model=CompanyStudy, summary="上市公司整合研究")
+async def company_study(
+    code: StockCode,
+    query: Annotated[StudyQuery, Query()],
+    request: Request,
+    stocks: StockServiceDependency,
+    source: RequestSourceDependency,
+    notices: NoticeServiceDependency,
+):
+    return await CompanyStudyService(stocks, source, notices).research(
+        code, query, request.is_disconnected
+    )

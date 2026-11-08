@@ -25,7 +25,9 @@ class AuthSecurityMiddleware:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         path = get_route_path(scope) if scope["type"] == "http" else ""
-        private_mutation = path.startswith("/api/v1/workspace/items") and scope.get("method") in {
+        private_mutation = (
+            path.startswith("/api/v1/workspace/items") or path.startswith("/api/v1/watchlists")
+        ) and scope.get("method") in {
             "POST",
             "PUT",
             "DELETE",
@@ -86,7 +88,9 @@ class AuthSecurityMiddleware:
             if message["type"] == "http.disconnect":
                 return
             chunk = message.get("body", b"")
-            if len(body) + len(chunk) > (131_072 if private_mutation else MAX_AUTH_BODY_BYTES):
+            if len(body) + len(chunk) > (
+                131_072 if path.startswith("/api/v1/workspace/items") else MAX_AUTH_BODY_BYTES
+            ):
                 await error_response(request, 413, "BODY_TOO_LARGE", "請求內容超過大小限制。")(
                     scope, receive, send
                 )

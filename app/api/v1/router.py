@@ -9,6 +9,7 @@ from app.api.v1.endpoints import (
     security_identity,
     stocks,
     twse,
+    watchlists,
     workspace,
 )
 from app.schemas.common import ErrorResponse
@@ -27,3 +28,5 @@ router.include_router(workspace.router)
 router.include_router(lab.router)
 
 router.include_router(security_identity.router)
+
+router.include_router(watchlists.router)
