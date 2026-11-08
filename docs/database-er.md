@@ -1,6 +1,6 @@
 # 目前 ER 圖
 
-九張表都位於 `app` schema，對應 SQLAlchemy ORM 與 Alembic `0006_security_identity`；`market` schema 沒有資料表。
+十張表都位於 `app` schema，對應 SQLAlchemy ORM 與 Alembic `0007_paper_accounts`；`market` schema 沒有資料表。
 
 ```mermaid
 erDiagram
@@ -10,8 +10,20 @@ erDiagram
     users ||--o{ auth_sessions : "ON DELETE CASCADE"
     users ||--o{ verification_tokens : "ON DELETE CASCADE"
     users ||--o{ workspace_items : "ON DELETE CASCADE"
+    users ||--o{ paper_accounts : "ON DELETE CASCADE"
     users ||--o{ watchlists : "ON DELETE CASCADE"
     watchlists ||--o{ watchlist_items : "ON DELETE CASCADE"
+
+    paper_accounts {
+        uuid id PK
+        uuid user_id FK
+        varchar name "本人帳戶名，不分大小寫唯一"
+        numeric initial_cash "起始虛擬資金"
+        jsonb orders "使用者指定交易與日誌"
+        integer version
+        timestamptz created_at
+        timestamptz updated_at
+    }
 
     security_identities {
         uuid id PK
@@ -118,3 +130,6 @@ status 僅允許 `pending_verification`、`active`、`disabled`；purpose 僅允
 工作區新增 `UNIQUE (user_id,kind,lower(name))`、版本與 kind CHECK，payload 僅接受已驗證使用者文件，無行情。詳細資料規則見 [研究工作區](research-workspace.md)。
 
 三張身分表只保存 UUID、掛牌區間、ISIN／名稱別名與來源證據，不保存行情、全市場快照或回測結果。所有跨區間衝突由受控匯入交易拒絕，見 [進階研究契約](advanced-research-scope.md)。
+
+
+`paper_accounts` 是獨立的私人虛擬帳戶（user FK ON DELETE CASCADE），包含初始資金、使用者指定的練習交易／理由／心情／覆盤與版本。沒有報價序列或市值快取。詳細結構與邊界見[模擬與學習說明](practice-and-learning.md)。

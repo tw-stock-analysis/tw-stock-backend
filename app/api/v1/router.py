@@ -5,6 +5,7 @@ from app.api.v1.endpoints import (
     health,
     instruments,
     lab,
+    practice,
     research,
     security_identity,
     stocks,
@@ -30,3 +31,4 @@ router.include_router(lab.router)
 router.include_router(security_identity.router)
 
 router.include_router(watchlists.router)
+router.include_router(practice.router)

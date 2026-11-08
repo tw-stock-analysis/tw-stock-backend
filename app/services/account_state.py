@@ -22,6 +22,7 @@ async def transaction(factory: SessionFactory) -> AsyncIterator[AsyncSession]:
             yield session
     except IntegrityError as error:
         conflicts = {
+            "uq_paper_accounts_user_name": ("PRACTICE_NAME_EXISTS", "已有同名模擬帳戶。"),
             "uq_workspace_items_user_kind_name": (
                 "WORKSPACE_NAME_EXISTS",
                 "同類型已有同名研究文件。",

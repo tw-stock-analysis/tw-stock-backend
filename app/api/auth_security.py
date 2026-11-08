@@ -26,7 +26,9 @@ class AuthSecurityMiddleware:
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         path = get_route_path(scope) if scope["type"] == "http" else ""
         private_mutation = (
-            path.startswith("/api/v1/workspace/items") or path.startswith("/api/v1/watchlists")
+            path.startswith("/api/v1/workspace/items")
+            or path.startswith("/api/v1/watchlists")
+            or path.startswith("/api/v1/practice")
         ) and scope.get("method") in {
             "POST",
             "PUT",

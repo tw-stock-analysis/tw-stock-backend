@@ -64,6 +64,49 @@ def ledger_positions(ledger: list[LedgerEntry]) -> list[dict]:
         ]
 
 
+def allocation(positions: list[dict], complete: bool) -> dict:
+    """Only a fully valued basket can have a market-value allocation."""
+    if not complete:
+        return {
+            "status": "incomplete",
+            "total_market_value": None,
+            "by_instrument": [],
+            "by_industry": [],
+        }
+    with localcontext() as context:
+        context.prec = 64
+        held = [p for p in positions if Decimal(p["quantity"]) > 0]
+        total = sum((Decimal(p["market_value"]) for p in held), Decimal(0))
+        if total == 0:
+            return {
+                "status": "empty",
+                "total_market_value": "0",
+                "by_instrument": [],
+                "by_industry": [],
+            }
+        industries: dict[str, Decimal] = defaultdict(Decimal)
+        instruments = []
+        for p in held:
+            value = Decimal(p["market_value"])
+            industries[p.get("industry") or "產業未確認"] += value
+            instruments.append(
+                {
+                    "label": f"{p['market']}:{p['code']}",
+                    "value": format(value, "f"),
+                    "percent": format(value / total * 100, ".4f"),
+                }
+            )
+        return {
+            "status": "ok",
+            "total_market_value": format(total, "f"),
+            "by_instrument": instruments,
+            "by_industry": [
+                {"label": k, "value": format(v, "f"), "percent": format(v / total * 100, ".4f")}
+                for k, v in sorted(industries.items())
+            ],
+        }
+
+
 async def _value_portfolio(ledger: list[LedgerEntry], source: FinMindService, as_of: date) -> dict:
     positions = ledger_positions([entry for entry in ledger if entry.date <= as_of])
     catalogue = (
@@ -78,7 +121,13 @@ async def _value_portfolio(ledger: list[LedgerEntry], source: FinMindService, as
         for position in positions:
             quantity, cost = Decimal(position["quantity"]), Decimal(position["cost"])
             position.update(
-                last_price=None, price_date=None, market_value=None, unrealized=None, error=None
+                name=None,
+                industry=None,
+                last_price=None,
+                price_date=None,
+                market_value=None,
+                unrealized=None,
+                error=None,
             )
             if quantity == 0:
                 position.update(market_value="0", unrealized="0")
@@ -92,11 +141,12 @@ async def _value_portfolio(ledger: list[LedgerEntry], source: FinMindService, as
                 continue
             try:
                 assert catalogue is not None
-                InstrumentService.resolve(
+                instrument = InstrumentService.resolve(
                     catalogue,
                     InstrumentRef(market=position["market"], code=position["code"]),
                     as_of,
                 )
+                position.update(name=instrument.name, industry=instrument.industry)
                 start = as_of - timedelta(days=30)
                 rows, meta = await source.fetch("TaiwanStockPrice", position["code"], start, as_of)
                 points = [
@@ -132,6 +182,7 @@ async def _value_portfolio(ledger: list[LedgerEntry], source: FinMindService, as
         )
         return {
             "positions": positions,
+            "allocation": allocation(positions, complete),
             "complete": complete,
             "as_of": as_of,
             "realized": format(realized, "f"),

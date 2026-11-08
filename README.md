@@ -2,6 +2,8 @@
 
 使用 Python 3.12、FastAPI 與 uv。
 
+新增[新手學習、私人模擬帳戶與配置](docs/practice-and-learning.md)，更新需套用 `0007_paper_accounts`；只保存使用者練習記錄，不儲存來源行情。
+
 新增[上市公司整合研究與個人觀察 API](docs/company-study.md)：同一入口組合成交、營收、財報、估值、股利與公告，並串接真正的本人觀察清單；維持逐次請求、不儲存行情。
 
 ## 本機 Docker 開發環境

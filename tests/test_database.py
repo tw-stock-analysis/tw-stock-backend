@@ -88,6 +88,7 @@ async def test_real_asyncpg_database_and_namespaces():
                 ("app", "watchlists"),
                 ("app", "watchlist_items"),
                 ("app", "workspace_items"),
+                ("app", "paper_accounts"),
                 ("app", "security_identities"),
                 ("app", "security_listings"),
                 ("app", "security_identifiers"),
