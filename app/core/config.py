@@ -73,6 +73,10 @@ class Settings(BaseSettings):
     def sqlalchemy_url(self) -> URL:
         if self.database_url:
             url = make_url(self.database_url)
+            # Managed Postgres providers supply driver-neutral URLs. Keep the
+            # async driver explicit without reparsing or rebuilding credentials.
+            if url.drivername in {"postgres", "postgresql"}:
+                url = url.set(drivername="postgresql+asyncpg")
             if url.drivername != "postgresql+asyncpg":
                 raise ValueError("DATABASE_URL must use postgresql+asyncpg")
             return url

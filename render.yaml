@@ -1,0 +1,53 @@
+# The first sync creates new resources only. Keep automatic sync/deploy off
+# until the assigned public URLs have been wired and the release verified.
+# After creation, replace both deployment-pending.invalid origins with the
+# assigned service URLs and update the Render environments before advertising
+# the site. Never put database credentials or FinMind tokens in this file.
+projects:
+  - name: 台股研究網站
+    environments:
+      - name: production
+        databases:
+          - name: tw-stock-postgres
+            databaseName: twstock
+            user: twstock
+            postgresMajorVersion: '17'
+            region: singapore
+            plan: free
+            ipAllowList: []
+        services:
+          - type: web
+            name: tw-stock-api
+            runtime: docker
+            repo: https://github.com/tw-stock-analysis/tw-stock-backend
+            branch: feat/market-research-tools
+            region: singapore
+            plan: free
+            dockerfilePath: ./Dockerfile
+            dockerContext: .
+            dockerCommand: python -m app.render_start
+            healthCheckPath: /api/v1/health/ready
+            autoDeployTrigger: 'off'
+            envVars:
+              - key: APP_ENV
+                value: production
+              - key: DATABASE_URL
+                fromDatabase:
+                  name: tw-stock-postgres
+                  property: connectionString
+              - key: AUTH_ALLOWED_ORIGINS
+                value: '["https://deployment-pending.invalid"]'
+          - type: web
+            name: tw-stock-web
+            runtime: docker
+            repo: https://github.com/tw-stock-analysis/tw-stock-frontend
+            branch: feat/market-research-tools
+            region: singapore
+            plan: free
+            dockerfilePath: ./Dockerfile.render
+            dockerContext: .
+            healthCheckPath: /healthz
+            autoDeployTrigger: 'off'
+            envVars:
+              - key: BACKEND_ORIGIN
+                value: https://deployment-pending.invalid
